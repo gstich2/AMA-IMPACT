@@ -1,8 +1,8 @@
 """Initial migration - fresh start
 
-Revision ID: a69ae56740fc
+Revision ID: e1fea4c585d2
 Revises: 
-Create Date: 2025-11-03 10:21:20.267175
+Create Date: 2025-11-03 10:33:58.772911
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a69ae56740fc'
+revision: str = 'e1fea4c585d2'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -54,6 +54,14 @@ def upgrade() -> None:
     sa.Column('reports_to_id', sa.String(length=36), nullable=True),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('last_login', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('force_password_change', sa.Boolean(), nullable=False),
+    sa.Column('password_changed_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('password_reset_token', sa.String(length=255), nullable=True),
+    sa.Column('password_reset_token_expires', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('password_change_count', sa.String(length=50), nullable=False),
+    sa.Column('invitation_token', sa.String(length=255), nullable=True),
+    sa.Column('invitation_token_expires', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('invitation_accepted', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.ForeignKeyConstraint(['contract_id'], ['contracts.id'], ),
@@ -109,6 +117,7 @@ def upgrade() -> None:
     sa.Column('created_by', sa.String(length=36), nullable=False),
     sa.Column('visa_type', sa.Enum('H1B', 'L1', 'O1', 'TN', 'EB1A', 'EB1B', 'EB2', 'EB2NIW', 'PERM', 'OPT', 'EAD', 'GREEN_CARD', name='visatypeenum'), nullable=False),
     sa.Column('status', sa.Enum('DRAFT', 'SUBMITTED', 'IN_PROGRESS', 'APPROVED', 'DENIED', 'EXPIRED', 'RENEWED', name='visastatus'), nullable=False),
+    sa.Column('case_status', sa.Enum('UPCOMING', 'ACTIVE', 'FINALIZED', name='visacasestatus'), nullable=False),
     sa.Column('priority', sa.Enum('LOW', 'MEDIUM', 'HIGH', 'CRITICAL', name='visapriority'), nullable=False),
     sa.Column('filing_date', sa.Date(), nullable=True),
     sa.Column('approval_date', sa.Date(), nullable=True),
@@ -123,6 +132,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['visa_type_id'], ['visa_types.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_visa_applications_case_status'), 'visa_applications', ['case_status'], unique=False)
     op.create_index(op.f('ix_visa_applications_expiration_date'), 'visa_applications', ['expiration_date'], unique=False)
     op.create_index(op.f('ix_visa_applications_user_id'), 'visa_applications', ['user_id'], unique=False)
     op.create_table('email_logs',
@@ -146,6 +156,7 @@ def downgrade() -> None:
     op.drop_table('email_logs')
     op.drop_index(op.f('ix_visa_applications_user_id'), table_name='visa_applications')
     op.drop_index(op.f('ix_visa_applications_expiration_date'), table_name='visa_applications')
+    op.drop_index(op.f('ix_visa_applications_case_status'), table_name='visa_applications')
     op.drop_table('visa_applications')
     op.drop_table('user_settings')
     op.drop_index(op.f('ix_notifications_user_id'), table_name='notifications')

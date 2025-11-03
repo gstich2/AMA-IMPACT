@@ -34,6 +34,13 @@ class VisaStatus(str, enum.Enum):
     RENEWED = "renewed"
 
 
+class VisaCaseStatus(str, enum.Enum):
+    """Visa case status enumeration."""
+    UPCOMING = "upcoming"  # Future case, not yet started
+    ACTIVE = "active"      # Currently working on
+    FINALIZED = "finalized"  # Completed (approved or denied)
+
+
 class VisaPriority(str, enum.Enum):
     """Visa application priority enumeration."""
     LOW = "low"
@@ -57,6 +64,7 @@ class VisaApplication(Base):
     # Visa details
     visa_type = Column(Enum(VisaTypeEnum), nullable=False)
     status = Column(Enum(VisaStatus), nullable=False, default=VisaStatus.DRAFT)
+    case_status = Column(Enum(VisaCaseStatus), nullable=False, default=VisaCaseStatus.ACTIVE, index=True)
     priority = Column(Enum(VisaPriority), nullable=False, default=VisaPriority.MEDIUM)
     
     # Important dates

@@ -1,13 +1,14 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import date, datetime
-from app.models.visa import VisaTypeEnum, VisaStatus, VisaPriority
+from app.models.visa import VisaTypeEnum, VisaStatus, VisaPriority, VisaCaseStatus
 
 
 class VisaApplicationBase(BaseModel):
     """Base visa application schema."""
     visa_type: VisaTypeEnum
     status: VisaStatus = VisaStatus.DRAFT
+    case_status: VisaCaseStatus = VisaCaseStatus.ACTIVE
     priority: VisaPriority = VisaPriority.MEDIUM
     filing_date: Optional[date] = None
     approval_date: Optional[date] = None
@@ -26,6 +27,7 @@ class VisaApplicationUpdate(BaseModel):
     """Schema for updating a visa application."""
     visa_type: Optional[VisaTypeEnum] = None
     status: Optional[VisaStatus] = None
+    case_status: Optional[VisaCaseStatus] = None
     priority: Optional[VisaPriority] = None
     filing_date: Optional[date] = None
     approval_date: Optional[date] = None
@@ -43,6 +45,7 @@ class VisaApplication(VisaApplicationBase):
     user_id: str
     visa_type_id: str
     created_by: str
+    case_status: VisaCaseStatus
     is_active: bool
     created_at: datetime
     updated_at: datetime

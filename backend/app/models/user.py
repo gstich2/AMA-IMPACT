@@ -38,6 +38,16 @@ class User(Base):
     is_active = Column(Boolean, default=True, nullable=False)
     last_login = Column(DateTime(timezone=True), nullable=True)
     
+    # Password management
+    force_password_change = Column(Boolean, default=False, nullable=False)
+    password_changed_at = Column(DateTime(timezone=True), nullable=True)
+    password_reset_token = Column(String(255), nullable=True)
+    password_reset_token_expires = Column(DateTime(timezone=True), nullable=True)
+    password_change_count = Column(String(50), default="0|", nullable=False)  # Format: "count|last_reset_date"
+    invitation_token = Column(String(255), nullable=True)
+    invitation_token_expires = Column(DateTime(timezone=True), nullable=True)
+    invitation_accepted = Column(Boolean, default=False, nullable=False)
+    
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

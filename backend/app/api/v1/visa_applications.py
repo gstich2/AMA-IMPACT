@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_db
 from app.core.security import get_current_active_user
 from app.models.user import User
-from app.models.visa import VisaApplication
+from app.models.visa import VisaApplication, VisaCaseStatus
 from app.schemas.visa import (
     VisaApplication as VisaApplicationSchema,
     VisaApplicationCreate,
@@ -19,10 +19,18 @@ router = APIRouter()
 async def list_visa_applications(
     skip: int = 0,
     limit: int = 100,
+    case_status: Optional[str] = Query(None, description="Filter by case status: UPCOMING, ACTIVE, or FINALIZED"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """List visa applications (filtered by permissions)."""
+    """
+    List visa applications (filtered by permissions and case status).
+    
+    Case Status:
+    - UPCOMING: Cases that are planned but not yet active
+    - ACTIVE: Cases currently being worked on
+    - FINALIZED: Completed or closed cases
+    """
     # TODO: Implement hierarchical filtering
     # Staff: only their own
     # Tech Lead: their reports
@@ -30,7 +38,20 @@ async def list_visa_applications(
     # HR: assigned contracts
     # Admin: all
     
-    applications = db.query(VisaApplication).offset(skip).limit(limit).all()
+    query = db.query(VisaApplication)
+    
+    # Filter by case status if provided
+    if case_status:
+        try:
+            status_enum = VisaCaseStatus(case_status.upper())
+            query = query.filter(VisaApplication.case_status == status_enum)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid case status. Must be one of: UPCOMING, ACTIVE, FINALIZED"
+            )
+    
+    applications = query.offset(skip).limit(limit).all()
     return applications
 
 
