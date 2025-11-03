@@ -1,0 +1,65 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+from app.core.config import settings
+from app.core.database import engine, Base
+from app.api.v1 import auth, users, contracts, visa_applications
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
+
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
+# Create FastAPI app
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.APP_VERSION,
+    description="Immigration Visa Management System API",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# Add rate limiter state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {
+        "message": f"Welcome to {settings.APP_NAME} API",
+        "version": settings.APP_VERSION,
+        "docs": "/docs"
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "healthy"}
+
+
+# Include routers
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+app.include_router(contracts.router, prefix="/api/v1/contracts", tags=["Contracts"])
+app.include_router(visa_applications.router, prefix="/api/v1/visa-applications", tags=["Visa Applications"])
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
