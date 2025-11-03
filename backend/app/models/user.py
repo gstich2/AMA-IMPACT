@@ -43,13 +43,13 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
-    contract = relationship("Contract", back_populates="users")
-    reports_to = relationship("User", remote_side=[id], backref="direct_reports")
-    visa_applications = relationship("VisaApplication", back_populates="user", cascade="all, delete-orphan")
-    created_visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.created_by", back_populates="creator")
-    audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
-    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
-    settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    contract = relationship("Contract", back_populates="users", lazy="select")
+    reports_to = relationship("User", remote_side=[id], backref="direct_reports", lazy="select")
+    visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.user_id", back_populates="user", cascade="all, delete-orphan", overlaps="created_visa_applications,creator", lazy="select")
+    created_visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.created_by", back_populates="creator", overlaps="visa_applications,user", lazy="select")
+    audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan", lazy="select")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan", lazy="select")
+    settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="select")
     
     def __repr__(self):
         return f"<User {self.email}>"

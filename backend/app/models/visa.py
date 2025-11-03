@@ -74,8 +74,8 @@ class VisaApplication(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
-    user = relationship("User", foreign_keys=[user_id], back_populates="visa_applications")
-    creator = relationship("User", foreign_keys=[created_by], back_populates="created_visa_applications")
+    user = relationship("User", foreign_keys=[user_id], back_populates="visa_applications", overlaps="created_visa_applications,creator")
+    creator = relationship("User", foreign_keys=[created_by], back_populates="created_visa_applications", overlaps="visa_applications,user")
     visa_type_info = relationship("VisaType", back_populates="applications")
     email_logs = relationship("EmailLog", back_populates="visa_application", cascade="all, delete-orphan")
     
