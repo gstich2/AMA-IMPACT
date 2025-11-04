@@ -28,10 +28,21 @@ ENV/
 env.bak/
 venv.bak/
 
-# Database
+# Database (SQLite - not tracked during development)
 *.db
+*.db-journal
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
+
+# Alembic migrations (not tracked during development until deployment)
+backend/alembic/versions/*.py
+
+# Documentation changes and logs (not tracked)
+*.md~
+*.log
+logs/
 
 # Environment variables
 .env

@@ -31,6 +31,7 @@ class Contract(Base):
     
     # Relationships
     users = relationship("User", back_populates="contract")
+    departments = relationship("Department", back_populates="contract", cascade="all, delete-orphan")
     
     def __repr__(self):
         return f"<Contract {self.code}>"

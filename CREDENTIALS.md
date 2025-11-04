@@ -1,39 +1,119 @@
-# AMA-IMPACT Default User Credentials
+# AMA-IMPACT Test User Credentials
 
-**⚠️ IMPORTANT: Change these passwords in production!**
+## Default Test Users
 
-## 🔐 Test User Accounts
+After running `backend/reset_db.sh`, the following test users are available:
 
-### 👨‍💼 Admin (Full System Access)
-- **Email:** `admin@ama-impact.com`
-- **Password:** `Admin123!`
-- **Access:** All contracts, all users, system settings
+### 1. Administrator
+- **Email**: `admin@ama-impact.com`
+- **Password**: `Admin123!`
+- **Role**: ADMIN
+- **Department**: None (system-wide)
+- **Access**: Full system access, all contracts and departments
 
-### 👔 HR (Multi-Contract Access)
-- **Email:** `hr@ama-impact.com`
-- **Password:** `HR123!`
-- **Access:** ASSESS-2025 contract, generate reports
-- **Contract:** ASSESS-2025
+### 2. HR Manager
+- **Email**: `hr@ama-impact.com`
+- **Password**: `HR123!`
+- **Role**: HR
+- **Contract**: ASSESS-2025
+- **Department**: None (contract-wide)
+- **Access**: Can view and manage assigned contracts
 
-### 📊 Program Manager (Contract-Wide)
-- **Email:** `pm@ama-impact.com`
-- **Password:** `PM123!`
-- **Access:** All users in ASSESS-2025 contract
-- **Contract:** ASSESS-2025
+### 3. Program Manager
+- **Email**: `pm@ama-impact.com`
+- **Password**: `PM123!`
+- **Role**: PROGRAM_MANAGER
+- **Contract**: ASSESS-2025
+- **Department**: None (contract-level)
+- **Access**: Full access to ASSESS contract (all departments)
 
-### 👨‍💻 Tech Lead (Team-Level)
-- **Email:** `techlead@ama-impact.com`
-- **Password:** `Tech123!`
-- **Access:** Own data + direct/indirect reports
-- **Contract:** ASSESS-2025
-- **Reports To:** Program Manager
+### 4. Technical Lead (TS Manager)
+- **Email**: `techlead@ama-impact.com`
+- **Password**: `Tech123!`
+- **Role**: TECH_LEAD
+- **Contract**: ASSESS-2025
+- **Department**: TS (Code TS)
+- **Reports to**: Program Manager
+- **Manages**: TS department (includes TSM, TSA sub-departments)
+- **Access**: Can view TS, TSM, and TSA department users and their visas
 
-### 👤 Staff (Self-Only)
-- **Email:** `staff@ama-impact.com`
-- **Password:** `Staff123!`
-- **Access:** Own visa records only
-- **Contract:** ASSESS-2025
-- **Reports To:** Tech Lead
+### 5. Staff Member (TSM)
+- **Email**: `staff@ama-impact.com`
+- **Password**: `Staff123!`
+- **Role**: STAFF
+- **Contract**: ASSESS-2025
+- **Department**: TSM (under TS)
+- **Reports to**: Technical Lead
+- **Access**: Can only view own data
+
+### 6. Staff Member (TNA)
+- **Email**: `staff.tna@ama-impact.com`
+- **Password**: `Staff123!`
+- **Role**: STAFF
+- **Contract**: ASSESS-2025
+- **Department**: TNA
+- **Reports to**: Program Manager
+- **Access**: Can only view own data
+
+## Organizational Structure
+
+```
+ASSESS-2025 (Contract)
+├── TS (Code) - Manager: techlead@ama-impact.com
+│   ├── TSM (Division) - Staff: staff@ama-impact.com
+│   └── TSA (Division)
+├── TNA (Division) - Staff: staff.tna@ama-impact.com
+└── AV (Division)
+
+RESESS-2025 (Contract)
+└── (No departments yet)
+```
+
+## Role & Department Hierarchy
+
+```
+ADMIN (System-wide)
+├── HR (Multi-contract)
+└── CONTRACT (e.g., ASSESS)
+    ├── PROGRAM_MANAGER (Contract-wide, all departments)
+    └── DEPARTMENTS
+        ├── DEPARTMENT MANAGER (Department + sub-departments)
+        │   └── TECH_LEAD (Team)
+        └── STAFF (Self-only)
+```
+
+## Access Rules
+
+1. **ADMIN**: Sees everything across all contracts and departments
+2. **HR**: Sees all assigned contracts and their departments
+3. **PROGRAM_MANAGER**: Sees entire contract (all departments)
+4. **TECH_LEAD** (Department Manager): 
+   - Sees own department + all child departments
+   - Example: TS manager sees TS, TSM, TSA users
+5. **STAFF**: Only sees own data
+
+## Department Features
+
+- **Flexible Hierarchy**: Can be 1-3+ levels deep
+- **Self-Referencing**: Departments can have parent departments
+- **Flat Structure**: Can add departments without parents (like TNA, AV)
+- **Hierarchical Structure**: Can nest departments (TS → TSM, TSA)
+- **Department Managers**: Each department can have a manager/lead
+- **Tree Traversal**: Managers see all users in their department tree
+
+## Default Contracts
+
+1. **ASSESS-2025**: ASSESS Program (Active) - Has departments
+2. **RESESS-2025**: RESESS Program (Active) - No departments yet
+
+## Notes
+
+- All passwords follow the pattern: `[Role]123!`
+- Staff can only see their own visa applications
+- Department managers can see all users in their department + sub-departments
+- Program Managers can see all departments in their contract
+- HR can see all departments across assigned contracts
+- Admin has full system access
 
 ---
 

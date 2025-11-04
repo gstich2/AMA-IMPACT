@@ -16,9 +16,10 @@ from app.core.security import get_password_hash
 # Import all models to ensure relationships are configured
 from app.models.user import User, UserRole
 from app.models.contract import Contract, ContractStatus
+from app.models.department import Department
 from app.models.visa import VisaType, VisaApplication
 from app.models.audit import AuditLog
-from app.models.notification import Notification, EmailLog
+from app.models.notification import Notification
 from app.models.settings import UserSettings
 
 
@@ -60,6 +61,60 @@ def seed_database():
         db.flush()
         print('✅ Sample contracts created')
         
+        # Create departments for ASSESS contract
+        # Option 1: Hierarchical structure (TS → TSM, TSA)
+        dept_ts = Department(
+            name='Code TS',
+            code='TS',
+            description='Technology Systems',
+            contract_id=contract_assess.id,
+            parent_id=None,
+            level=1
+        )
+        db.add(dept_ts)
+        db.flush()
+        
+        dept_tsm = Department(
+            name='TSM Division',
+            code='TSM',
+            description='Technology Systems Management',
+            contract_id=contract_assess.id,
+            parent_id=dept_ts.id,
+            level=2
+        )
+        dept_tsa = Department(
+            name='TSA Division',
+            code='TSA',
+            description='Technology Systems Administration',
+            contract_id=contract_assess.id,
+            parent_id=dept_ts.id,
+            level=2
+        )
+        db.add(dept_tsm)
+        db.add(dept_tsa)
+        
+        # Option 2: Flat departments (no parent)
+        dept_tna = Department(
+            name='TNA Division',
+            code='TNA',
+            description='Technology Network Administration',
+            contract_id=contract_assess.id,
+            parent_id=None,
+            level=1
+        )
+        dept_av = Department(
+            name='AV Division',
+            code='AV',
+            description='Audio Visual',
+            contract_id=contract_assess.id,
+            parent_id=None,
+            level=1
+        )
+        db.add(dept_tna)
+        db.add(dept_av)
+        db.flush()
+        print('✅ Departments created (TS→TSM/TSA, TNA, AV)')
+        
         # Create HR User
         hr_user = User(
             email='hr@ama-impact.com',
@@ -74,7 +129,7 @@ def seed_database():
         db.flush()
         print('✅ HR user created')
         
-        # Create PM User
+        # Create PM User (Contract level - sees all departments)
         pm_user = User(
             email='pm@ama-impact.com',
             hashed_password=get_password_hash('PM123!'),
@@ -82,13 +137,14 @@ def seed_database():
             phone='+1-555-0300',
             role=UserRole.PROGRAM_MANAGER,
             contract_id=contract_assess.id,
+            department_id=None,  # PM at contract level
             is_active=True
         )
         db.add(pm_user)
         db.flush()
         print('✅ Program Manager created')
         
-        # Create Tech Lead User
+        # Create Tech Lead User (TS department lead - sees TS, TSM, TSA)
         tech_lead = User(
             email='techlead@ama-impact.com',
             hashed_password=get_password_hash('Tech123!'),
@@ -96,27 +152,44 @@ def seed_database():
             phone='+1-555-0400',
             role=UserRole.TECH_LEAD,
             contract_id=contract_assess.id,
+            department_id=dept_ts.id,
             reports_to_id=pm_user.id,
             is_active=True
         )
         db.add(tech_lead)
         db.flush()
-        print('✅ Tech Lead created')
         
-        # Create Staff User
-        staff_user = User(
+        # Set tech lead as manager of TS department
+        dept_ts.manager_id = tech_lead.id
+        print('✅ Tech Lead created (TS Manager)')
+        
+        # Create Staff Users in different departments
+        staff_tsm = User(
             email='staff@ama-impact.com',
             hashed_password=get_password_hash('Staff123!'),
-            full_name='Staff Member',
+            full_name='Staff Member (TSM)',
             phone='+1-555-0500',
             role=UserRole.STAFF,
             contract_id=contract_assess.id,
+            department_id=dept_tsm.id,
             reports_to_id=tech_lead.id,
             is_active=True
         )
-        db.add(staff_user)
+        staff_tna = User(
+            email='staff.tna@ama-impact.com',
+            hashed_password=get_password_hash('Staff123!'),
+            full_name='Staff Member (TNA)',
+            phone='+1-555-0501',
+            role=UserRole.STAFF,
+            contract_id=contract_assess.id,
+            department_id=dept_tna.id,
+            reports_to_id=pm_user.id,
+            is_active=True
+        )
+        db.add(staff_tsm)
+        db.add(staff_tna)
         db.flush()
-        print('✅ Staff user created')
+        print('✅ Staff users created (TSM, TNA)')
         
         # Create Visa Types
         visa_types = [

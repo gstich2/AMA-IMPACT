@@ -31,6 +31,9 @@ class User(Base):
     # Contract association
     contract_id = Column(String(36), ForeignKey("contracts.id"), nullable=True)
     
+    # Department/Organizational unit
+    department_id = Column(String(36), ForeignKey("departments.id"), nullable=True, index=True)
+    
     # Reporting hierarchy
     reports_to_id = Column(String(36), ForeignKey("users.id"), nullable=True)
     
@@ -54,6 +57,7 @@ class User(Base):
     
     # Relationships
     contract = relationship("Contract", back_populates="users", lazy="select")
+    department = relationship("Department", back_populates="users", foreign_keys=[department_id], lazy="select")
     reports_to = relationship("User", remote_side=[id], backref="direct_reports", lazy="select")
     visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.user_id", back_populates="user", cascade="all, delete-orphan", overlaps="created_visa_applications,creator", lazy="select")
     created_visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.created_by", back_populates="creator", overlaps="visa_applications,user", lazy="select")
