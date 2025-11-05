@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.v1 import auth, users, contracts, visa_applications, password
+from app.api.v1 import auth, users, beneficiaries, contracts, visa_applications, password, law_firms, dependents, case_groups, todos
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -57,8 +57,13 @@ async def health_check():
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(password.router, prefix="/api/v1/password", tags=["Password Management"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+app.include_router(beneficiaries.router, prefix="/api/v1/beneficiaries", tags=["Beneficiaries"])
+app.include_router(case_groups.router, prefix="/api/v1/case-groups", tags=["Case Groups"])
 app.include_router(contracts.router, prefix="/api/v1/contracts", tags=["Contracts"])
 app.include_router(visa_applications.router, prefix="/api/v1/visa-applications", tags=["Visa Applications"])
+app.include_router(law_firms.router, prefix="/api/v1/law-firms", tags=["Law Firms"])
+app.include_router(dependents.router, prefix="/api/v1/dependents", tags=["Dependents"])
+app.include_router(todos.router, prefix="/api/v1/todos", tags=["Todos"])
 
 
 if __name__ == "__main__":

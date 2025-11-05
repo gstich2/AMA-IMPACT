@@ -28,16 +28,19 @@ ENV/
 env.bak/
 venv.bak/
 
-# Database (SQLite - not tracked during development)
+# Database (SQLite - not tracked)
 *.db
 *.db-journal
 *.db-shm
 *.db-wal
 *.sqlite
 *.sqlite3
+backend/ama-impact.db*
+backend/devel.db*
 
-# Alembic migrations (not tracked during development until deployment)
+# Alembic migrations (not tracked until deployment)
 backend/alembic/versions/*.py
+backend/alembic/versions/__pycache__/
 
 # Documentation changes and logs (not tracked)
 *.md~
@@ -48,6 +51,8 @@ logs/
 .env
 .env.local
 .env.*.local
+backend/.env.production  # Contains sensitive production credentials
+backend/.env  # User's active environment file
 
 # IDE
 .vscode/

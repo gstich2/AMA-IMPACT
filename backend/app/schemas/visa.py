@@ -10,16 +10,49 @@ class VisaApplicationBase(BaseModel):
     status: VisaStatus = VisaStatus.DRAFT
     case_status: VisaCaseStatus = VisaCaseStatus.ACTIVE
     priority: VisaPriority = VisaPriority.MEDIUM
+    
+    # Case group (for multi-step visa cases like EB2)
+    case_group_id: Optional[str] = None
+    
+    # Dates
     filing_date: Optional[date] = None
     approval_date: Optional[date] = None
     expiration_date: Optional[date] = None
     i94_expiration_date: Optional[date] = None
+    next_action_date: Optional[date] = None
+    
+    # USCIS tracking
+    receipt_number: Optional[str] = Field(None, max_length=50)
+    company_case_id: Optional[str] = Field(None, max_length=50)
+    petition_type: Optional[str] = Field(None, max_length=50)
+    current_stage: Optional[str] = Field(None, max_length=100)
+    
+    # Law firm and attorney
+    law_firm_id: Optional[str] = None
+    attorney_name: Optional[str] = Field(None, max_length=255, description="Attorney full name")
+    attorney_email: Optional[str] = Field(None, max_length=255, description="Attorney email")
+    attorney_phone: Optional[str] = Field(None, max_length=50, description="Attorney phone")
+    responsible_party_id: Optional[str] = None
+    
+    # RFE tracking
+    rfe_received: bool = False
+    rfe_received_date: Optional[date] = None
+    rfe_response_date: Optional[date] = None
+    rfe_notes: Optional[str] = None
+    
+    # Cost tracking
+    filing_fee: Optional[str] = Field(None, max_length=20)
+    attorney_fee: Optional[str] = Field(None, max_length=20)
+    premium_processing: bool = False
+    premium_processing_fee: Optional[str] = Field(None, max_length=20)
+    total_cost: Optional[str] = Field(None, max_length=20)
+    
     notes: Optional[str] = None
 
 
 class VisaApplicationCreate(VisaApplicationBase):
     """Schema for creating a visa application."""
-    user_id: str
+    beneficiary_id: str
     visa_type_id: str
 
 
@@ -29,10 +62,43 @@ class VisaApplicationUpdate(BaseModel):
     status: Optional[VisaStatus] = None
     case_status: Optional[VisaCaseStatus] = None
     priority: Optional[VisaPriority] = None
+    
+    # Case group (for multi-step visa cases like EB2)
+    case_group_id: Optional[str] = None
+    
+    # Dates
     filing_date: Optional[date] = None
     approval_date: Optional[date] = None
     expiration_date: Optional[date] = None
     i94_expiration_date: Optional[date] = None
+    next_action_date: Optional[date] = None
+    
+    # USCIS tracking
+    receipt_number: Optional[str] = Field(None, max_length=50)
+    company_case_id: Optional[str] = Field(None, max_length=50)
+    petition_type: Optional[str] = Field(None, max_length=50)
+    current_stage: Optional[str] = Field(None, max_length=100)
+    
+    # Law firm and attorney
+    law_firm_id: Optional[str] = None
+    attorney_name: Optional[str] = Field(None, max_length=255)
+    attorney_email: Optional[str] = Field(None, max_length=255)
+    attorney_phone: Optional[str] = Field(None, max_length=50)
+    responsible_party_id: Optional[str] = None
+    
+    # RFE tracking
+    rfe_received: Optional[bool] = None
+    rfe_received_date: Optional[date] = None
+    rfe_response_date: Optional[date] = None
+    rfe_notes: Optional[str] = None
+    
+    # Cost tracking
+    filing_fee: Optional[str] = Field(None, max_length=20)
+    attorney_fee: Optional[str] = Field(None, max_length=20)
+    premium_processing: Optional[bool] = None
+    premium_processing_fee: Optional[str] = Field(None, max_length=20)
+    total_cost: Optional[str] = Field(None, max_length=20)
+    
     is_active: Optional[bool] = None
     notes: Optional[str] = None
 
@@ -42,8 +108,9 @@ class VisaApplication(VisaApplicationBase):
     model_config = ConfigDict(from_attributes=True)
     
     id: str
-    user_id: str
+    beneficiary_id: str
     visa_type_id: str
+    case_group_id: Optional[str]
     created_by: str
     case_status: VisaCaseStatus
     is_active: bool

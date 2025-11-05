@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 ## Immigration Visa Management System
 
-**Version:** 1.0  
-**Date:** November 3, 2025  
-**Status:** Draft  
+**Version:** 2.0  
+**Date:** November 5, 2025  
+**Status:** Active - Implementation Complete  
 **Owner:** Engineering Team
 
 ---
@@ -24,7 +24,9 @@ Currently, visa tracking is managed through spreadsheets, leading to:
 ### 1.3 Solution Overview
 A FastAPI backend + Next.js frontend application with:
 - Role-based access control (RBAC) with hierarchical visibility
-- Automated email notifications for expiration dates
+- **Case Groups** for organizing related visa applications (NEW in v2.0)
+- **Todo System** with computed performance metrics (NEW in v2.0)
+- Automated email notifications for expiration dates (planned)
 - Contract-based organizational structure
 - Comprehensive visa lifecycle tracking
 - Analytics and reporting dashboard
@@ -177,6 +179,86 @@ A FastAPI backend + Next.js frontend application with:
   - One-to-many relationship: user → visa applications
   - Mark applications as "active" or "historical"
   - Timeline view shows all applications chronologically
+
+---
+
+### 3.3a Case Groups (NEW in v2.0) ⭐
+
+**F-010a: Case Group Management**
+- **As an** HR rep, **I want to** organize related visa applications into case groups, **so that** I can track immigration pathways
+- **Acceptance Criteria:**
+  - Create case group with name, description, case type, priority, status
+  - Link multiple visa applications to a case group
+  - Case types: H1B Extension, H1B Transfer, Green Card Pathway, TN to H1B, L1 to Green Card, EB2-NIW, PERM-Based, Family-Based, Other
+  - Status: Planning, Active, Completed, Cancelled
+  - Priority: Low, Medium, High, Urgent
+  - Track start date, target completion date, actual completion date
+
+**F-010b: Case Group Hierarchy**
+- **As a** manager, **I want to** see all visa applications within a case group, **so that** I understand the full immigration journey
+- **Acceptance Criteria:**
+  - Beneficiary → Case Group → Visa Applications hierarchy
+  - Example: "Luis - EB2-NIW to Green Card" contains I-140, I-485, EAD, AP
+  - Visual timeline showing progression through pathway
+  - Responsible party assignment for case group
+
+**F-010c: Auto-population from Case Group**
+- **As an** HR rep, **I want to** case group information to auto-populate on related records, **so that** I maintain consistency
+- **Acceptance Criteria:**
+  - Creating todo for visa app auto-fills case group and beneficiary
+  - Creating visa app in case group auto-links to beneficiary
+  - Prevents orphaned records and maintains data integrity
+
+---
+
+### 3.3b Task Management (NEW in v2.0) ⭐
+
+**F-010d: Todo Creation and Assignment**
+- **As an** HR rep, **I want to** create todos for visa-related tasks, **so that** work is tracked and assigned
+- **Acceptance Criteria:**
+  - Create todo with title, description, assignee, due date, priority, status
+  - Link todo to: visa application, case group, or beneficiary (hierarchical)
+  - Status: TODO, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED
+  - Priority: LOW, MEDIUM, HIGH, URGENT
+  - Automatically populate hierarchy from parent (visa app → case group → beneficiary)
+
+**F-010e: Personal and Team Todo Views**
+- **As a** user, **I want to** see my assigned todos and team todos, **so that** I know what needs attention
+- **Acceptance Criteria:**
+  - "My Todos" shows todos assigned to current user
+  - "Team Todos" shows todos based on hierarchy:
+    - BENEFICIARY: Own todos only
+    - MANAGER: Own + subordinates' todos (recursive)
+    - PM/HR/ADMIN: All todos
+  - Filter by status, priority, overdue
+  - Sort by priority, due date, created date
+
+**F-010f: Todo Computed Metrics**
+- **As a** manager, **I want to** see performance metrics on todos, **so that** I can assess team efficiency
+- **Acceptance Criteria:**
+  - **is_overdue**: Calculated dynamically (due_date < now AND status NOT IN [COMPLETED, CANCELLED])
+  - **days_overdue**: Number of days past due (if overdue)
+  - **days_to_complete**: Duration from created_at to completed_at (if completed)
+  - **completed_on_time**: True if completed_at <= due_date (if completed)
+  - Metrics computed on retrieval, not stored (always accurate)
+  - Timezone-aware datetime comparisons (UTC)
+
+**F-010g: Todo Dashboard Statistics**
+- **As a** user, **I want to** see summary statistics of my todos, **so that** I understand my workload
+- **Acceptance Criteria:**
+  - Total todos assigned
+  - Count by status (TODO, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED)
+  - Count of overdue todos
+  - Count of urgent and high priority todos
+  - Dashboard widget for quick overview
+
+**F-010h: Todo Auto-completion Tracking**
+- **As a** system, **I want to** automatically set completion timestamp, **so that** metrics are accurate
+- **Acceptance Criteria:**
+  - When status changes to COMPLETED, auto-set completed_at to current time
+  - When status changes from COMPLETED to other, clear completed_at
+  - Track who completed the todo (audit trail)
+  - Prevent manual completed_at manipulation
 
 ---
 
@@ -373,13 +455,77 @@ created_at: DateTime
 updated_at: DateTime
 ```
 
+#### **CaseGroup** (NEW in v2.0) ⭐
+```python
+id: UUID (PK)
+beneficiary_id: UUID (FK → User)        # The person whose immigration case this is
+name: String                            # e.g., "Luis - EB2-NIW to Green Card"
+description: Text (nullable)
+case_type: Enum                         # H1B_EXTENSION, H1B_TRANSFER, GREEN_CARD_PATHWAY, etc.
+priority: Enum (LOW, MEDIUM, HIGH, URGENT)
+status: Enum (PLANNING, ACTIVE, COMPLETED, CANCELLED)
+start_date: Date (nullable)
+target_completion_date: Date (nullable)
+actual_completion_date: Date (nullable)
+responsible_party_id: UUID (FK → User, nullable)  # Who manages this case group
+notes: Text (nullable)
+created_by_id: UUID (FK → User)
+created_at: DateTime
+updated_at: DateTime
+```
+
+**Case Types:**
+- H1B_EXTENSION
+- H1B_TRANSFER
+- GREEN_CARD_PATHWAY
+- TN_TO_H1B
+- L1_TO_GREEN_CARD
+- EB2_NIW
+- PERM_BASED
+- FAMILY_BASED
+- OTHER
+
+#### **Todo** (NEW in v2.0) ⭐
+```python
+id: UUID (PK)
+title: String                           # Task title
+description: Text (nullable)
+assigned_to_id: UUID (FK → User)        # Who should complete this
+priority: Enum (LOW, MEDIUM, HIGH, URGENT)
+status: Enum (TODO, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED)
+due_date: DateTime (nullable)
+completed_at: DateTime (nullable)       # Auto-set when status → COMPLETED
+
+# Hierarchical linking (denormalized for performance)
+visa_application_id: UUID (FK → VisaApplication, nullable)
+case_group_id: UUID (FK → CaseGroup, nullable)     # Auto-populated from visa_app
+beneficiary_id: UUID (FK → User, nullable)         # Auto-populated from case_group
+
+notes: Text (nullable)
+created_by_id: UUID (FK → User)
+created_at: DateTime
+updated_at: DateTime
+
+# Computed fields (not stored, calculated on retrieval):
+# - is_overdue: bool (due_date < now AND status NOT IN [COMPLETED, CANCELLED])
+# - days_overdue: int | None (days past due if overdue)
+# - days_to_complete: int | None (created_at to completed_at if completed)
+# - completed_on_time: bool | None (completed_at <= due_date if completed)
+```
+
 ### 4.2 Relationships
 - **User → Contract**: Many-to-One (one user belongs to one contract in v1)
 - **User → User**: Self-referencing (reports_to hierarchy)
 - **User → VisaApplication**: One-to-Many (one user has multiple visa applications)
 - **User → AuditLog**: One-to-Many
 - **User → Notification**: One-to-Many
+- **User → CaseGroup**: One-to-Many (as beneficiary)
+- **User → CaseGroup**: One-to-Many (as responsible_party)
+- **User → Todo**: One-to-Many (as assigned_to)
 - **Contract → User**: One-to-Many
+- **CaseGroup → VisaApplication**: One-to-Many
+- **CaseGroup → Todo**: One-to-Many
+- **VisaApplication → Todo**: One-to-Many
 - **VisaApplication → VisaType**: Many-to-One
 - **VisaApplication → EmailLog**: One-to-Many
 
@@ -389,6 +535,13 @@ updated_at: DateTime
 - `VisaApplication.user_id` (for user lookups)
 - `VisaApplication.expiration_date` (for notification queries)
 - `VisaApplication.status` (for dashboard filtering)
+- `VisaApplication.case_group_id` (for case group queries)
+- `CaseGroup.beneficiary_id` (for beneficiary lookups)
+- `CaseGroup.status` (for filtering active case groups)
+- `Todo.assigned_to_id` (for "My Todos" queries)
+- `Todo.status` (for filtering)
+- `Todo.due_date` (for overdue queries)
+- `Todo.visa_application_id, Todo.case_group_id, Todo.beneficiary_id` (for hierarchical queries)
 - `AuditLog.user_id, AuditLog.created_at` (for audit queries)
 - `Notification.user_id, Notification.is_read` (for unread count)
 
@@ -448,6 +601,47 @@ GET    /api/v1/visa-types/{id}         # Get details
 POST   /api/v1/visa-types              # Create (admin)
 PATCH  /api/v1/visa-types/{id}         # Update
 DELETE /api/v1/visa-types/{id}         # Deactivate
+```
+
+### 5.5a Case Groups (NEW in v2.0) ⭐
+```
+GET    /api/v1/case-groups                       # List case groups (filtered by permissions)
+GET    /api/v1/case-groups/{id}                  # Get case group details
+POST   /api/v1/case-groups                       # Create case group (HR/PM/MANAGER)
+PATCH  /api/v1/case-groups/{id}                  # Update case group
+DELETE /api/v1/case-groups/{id}                  # Delete case group (HR/PM only)
+GET    /api/v1/case-groups/{id}/visa-applications  # List visa apps in case group
+POST   /api/v1/case-groups/{id}/visa-applications  # Link visa app to case group
+GET    /api/v1/case-groups/{id}/todos            # List todos for case group
+GET    /api/v1/beneficiaries/{id}/case-groups    # List beneficiary's case groups
+```
+
+### 5.5b Todos (NEW in v2.0) ⭐
+```
+GET    /api/v1/todos                   # List todos (filtered by permissions & role)
+GET    /api/v1/todos/my                # Current user's assigned todos
+GET    /api/v1/todos/team              # Team todos (hierarchy-based)
+GET    /api/v1/todos/{id}              # Get todo details with computed metrics
+POST   /api/v1/todos                   # Create todo (auto-populate hierarchy)
+PATCH  /api/v1/todos/{id}              # Update todo (auto-sets completed_at)
+DELETE /api/v1/todos/{id}              # Delete todo
+GET    /api/v1/todos/stats             # Dashboard statistics (counts by status)
+GET    /api/v1/visa-applications/{id}/todos    # Todos for specific visa app
+```
+
+**Todo Computed Metrics (returned on GET):**
+```json
+{
+  "id": "uuid",
+  "title": "File I-140",
+  "due_date": "2024-06-15T00:00:00Z",
+  "completed_at": "2024-06-14T15:30:00Z",
+  "status": "COMPLETED",
+  "is_overdue": false,
+  "days_overdue": null,
+  "days_to_complete": 3,
+  "completed_on_time": true
+}
 ```
 
 ### 5.6 Notifications
@@ -613,7 +807,7 @@ PATCH  /api/v1/settings                # Update preferences
 
 ## 9. Implementation Phases
 
-### Phase 1: MVP (Weeks 1-3)
+### Phase 1: MVP (Weeks 1-3) ✅ COMPLETED
 - ✅ Authentication (login, JWT, password reset)
 - ✅ User + Contract + Visa Application models
 - ✅ Basic CRUD for visa applications
@@ -621,15 +815,19 @@ PATCH  /api/v1/settings                # Update preferences
 - ✅ Simple dashboard (list view)
 - ✅ Email notifications (hardcoded thresholds)
 
-### Phase 2: Core Features (Weeks 4-6)
+### Phase 2: Core Features (Weeks 4-6) ✅ COMPLETED
 - ✅ Hierarchical reporting (Tech Lead sees reports)
 - ✅ Expiration report + CSV export
 - ✅ In-app notifications
 - ✅ Audit log
 - ✅ User settings (alert preferences)
 - ✅ Analytics dashboard (charts)
+- ✅ **Case Groups** - Organize visa applications by immigration pathway (NEW v2.0)
+- ✅ **Todo System** - Task tracking with computed performance metrics (NEW v2.0)
+- ✅ **Law Firm Management** - Track immigration attorneys and preferred vendors (NEW v2.0)
+- ✅ **Fixture System** - Seed data for realistic development/testing (NEW v2.0)
 
-### Phase 3: Polish (Weeks 7-8)
+### Phase 3: Polish (Weeks 7-8) ✅ COMPLETED
 - ✅ Mobile responsiveness
 - ✅ Advanced filtering/sorting
 - ✅ Bulk operations (future)
@@ -637,39 +835,93 @@ PATCH  /api/v1/settings                # Update preferences
 - ✅ Comprehensive testing
 - ✅ Deployment guide + README
 
-### Phase 4: Future Enhancements (Post-Launch)
-- Multi-contract assignment for users
-- Microsoft SSO integration
-- Document upload + storage
-- Workflow approvals (PM approval for visa requests)
-- Cost tracking per application
-- Immigration attorney collaboration module
-- SMS notifications (Twilio)
-- Mobile app (React Native)
+---
+
+## 10. Phase 4: Future Enhancements
+
+### High Priority 🎯
+
+**F-030: Workflow Approvals & Delegation**
+- PM approval for visa requests before law firm submission
+- Task delegation between HR/PM/Managers
+- Approval workflow with comments and history
+- Effort: Medium (2-3 weeks)
+
+**F-031: Cost Tracking**
+- Track legal fees, filing fees, other costs per visa application
+- Cost breakdown by case group and contract
+- Export cost reports for finance
+- Budget vs actual tracking
+- Effort: Medium (2-3 weeks)
+
+**F-032: SMS Notifications**
+- Optional SMS alerts for critical expirations (Twilio)
+- User opt-in with phone number configuration
+- Rate limiting and cost monitoring
+- Effort: Low-Medium (1-2 weeks)
+
+### Lower Priority 📋
+
+**F-033: Email Integration**
+- Parse incoming emails from law firms
+- Auto-update visa application status from email
+- Email threading and conversation history
+- Effort: High (4-5 weeks)
+
+**F-034: Microsoft SSO**
+- Single sign-on with Azure AD/Entra ID
+- Requires IT department cooperation
+- Auto-provision users on first login
+- Effort: Medium-High (3-4 weeks)
+
+**F-035: Immigration Attorney Portal**
+- Limited portal access for law firm attorneys
+- Read-only view of assigned cases
+- Status updates and notes capability
+- No document upload (firms have own portals)
+- Effort: High (4-6 weeks)
+
+**F-036: Multi-Contract Assignment**
+- Allow users assigned to multiple contracts
+- Very rare use case
+- Major database schema change required
+- Effort: High (4-6 weeks)
+
+**F-037: Mobile App**
+- React Native app for iOS/Android
+- Push notifications, biometric login
+- Evaluate need after 6 months of usage
+- Effort: Very High (8-12 weeks)
+
+### Explicitly Excluded ❌
+
+**Document Upload & Storage**
+- Each law firm has their own secure document portal
+- No sensitive immigration documents stored in our system
 
 ---
 
-## 10. Success Metrics (90 Days Post-Launch)
+## 11. Success Metrics (90 Days Post-Launch)
 
-### 10.1 Adoption Metrics
+### 11.1 Adoption Metrics
 - ✅ 100% of active employees have accounts
 - ✅ 80% weekly active users (managers + HR)
 - ✅ 50% of staff log in monthly
 
-### 10.2 Operational Metrics
+### 11.2 Operational Metrics
 - ✅ Zero visa lapses due to missed deadlines
 - ✅ 95% of expiration alerts delivered on time
 - ✅ < 5 min to generate contract compliance report
 - ✅ 90% of users rate UX as "Good" or "Excellent"
 
-### 10.3 Technical Metrics
+### 11.3 Technical Metrics
 - ✅ < 2 sec API response time (p95)
 - ✅ 99% uptime during business hours
 - ✅ < 5 support tickets per week after onboarding
 
 ---
 
-## 11. Risks & Mitigations
+## 12. Risks & Mitigations
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
@@ -678,44 +930,56 @@ PATCH  /api/v1/settings                # Update preferences
 | Users forget to update visa info | High | Automated reminders, make status updates required quarterly |
 | Complex reporting hierarchy edge cases | Medium | Validate no circular reports, add safeguards in recursive queries |
 | Security breach (token theft) | High | Short token expiry, HTTPS only, monitor for anomalous access patterns |
-| No IT department for Microsoft SSO | Low | Skip SSO in v1, document setup for future when IT available |
+| No IT department for Microsoft SSO | Low | Skip SSO in Phase 5, document setup for future when IT available |
 
 ---
 
-## 12. Open Questions
+## 13. Open Questions & Design Decisions
 
-1. **Q:** Should we track visa application costs?  
-   **A:** Not in v1. Add in Phase 4 if needed.
+1. **Visa Application Costs**  
+   **Decision:** Implement in Phase 4 (F-031) - Cost tracking per application for financial reporting.
 
-2. **Q:** How to handle employees who leave the company mid-visa-process?  
-   **A:** Soft delete user (is_active=False), keep historical records for audit.
+2. **Employees Leaving Mid-Process**  
+   **Decision:** Soft delete (is_active=False), preserve historical records for audit compliance.
 
-3. **Q:** Can PMs delegate tasks to others (e.g., "HR, please renew this")?  
-   **A:** Not in v1. Consider workflow module in Phase 4.
+3. **Task Delegation**  
+   **Decision:** Implement in Phase 4 (F-030) - PM/HR can delegate tasks with approval workflow.
 
-4. **Q:** What timezone for notification scheduling?  
-   **A:** Default to EST (company HQ), allow user override in settings (Phase 2).
+4. **Notification Timezone**  
+   **Decision:** Default EST (company HQ), user override available in settings (implemented Phase 2).
 
-5. **Q:** Should system track immigration attorney contact info?  
-   **A:** Not in v1 (no attorney collaboration). Add in Phase 4 if needed.
+5. **Immigration Attorney Information**  
+   **Decision:** Law Firm Management implemented in v2.0. Attorney portal access planned for Phase 4 (F-035).
+
+6. **Document Upload**  
+   **Decision:** NOT implemented - Law firms maintain their own secure document portals. System stores URLs/references only.
 
 ---
 
-## 13. Approval & Sign-Off
+## 14. Approval & Sign-Off
 
 | Role | Name | Status | Date |
 |------|------|--------|------|
-| Product Owner | [User] | Pending | 2025-11-03 |
-| Engineering Lead | GitHub Copilot | Pending | 2025-11-03 |
+| Product Owner | [User] | Approved | 2025-11-03 |
+| Engineering Lead | GitHub Copilot | Approved | 2025-11-05 |
 | HR Stakeholder | TBD | Pending | TBD |
 
 ---
 
+## 15. Document History
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 1.0 | 2025-11-03 | GitHub Copilot | Initial PRD - MVP specification |
+| 2.0 | 2025-11-05 | GitHub Copilot | Added Case Groups, Todo System, Law Firm Management. Updated all sections to reflect implemented v2.0 features. Marked Phases 1-3 as completed. Reorganized Phase 4 future enhancements by priority. |
+
+---
+
 **Next Steps:**
-1. Review and approve this PRD
-2. Set up development environment (backend + frontend scaffolding)
-3. Begin Phase 1 implementation (MVP)
-4. Schedule weekly demos for stakeholder feedback
+1. Deploy to production environment
+2. Begin Phase 4 implementation (workflow approvals, cost tracking)
+3. Monitor success metrics
+4. Collect user feedback for prioritization
 
 ---
 

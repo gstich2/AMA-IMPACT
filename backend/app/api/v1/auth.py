@@ -9,7 +9,8 @@ from app.core.security import (
     get_password_hash,
     create_access_token,
     create_refresh_token,
-    verify_token
+    verify_token,
+    get_current_active_user
 )
 from app.models.user import User
 from app.schemas.user import UserCreate, User as UserSchema, Token
@@ -20,9 +21,36 @@ router = APIRouter()
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 async def register(
     user_in: UserCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
 ):
-    """Register a new user (admin only in production)."""
+    """
+    Create a new user with role-based restrictions:
+    - HR, PM, MANAGER can create BENEFICIARY users
+    - Only ADMIN can create users with elevated roles (HR, PM, MANAGER, ADMIN)
+    """
+    from app.models.user import UserRole
+    
+    # Define elevated roles that only ADMIN can create
+    ELEVATED_ROLES = {UserRole.ADMIN, UserRole.HR, UserRole.PM, UserRole.MANAGER}
+    
+    # Define roles that can create users
+    CREATOR_ROLES = {UserRole.ADMIN, UserRole.HR, UserRole.PM, UserRole.MANAGER}
+    
+    # Check if current user has permission to create users
+    if current_user.role not in CREATOR_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only HR, PM, MANAGER, and ADMIN can create users"
+        )
+    
+    # Check if trying to create elevated role user
+    if user_in.role in ELEVATED_ROLES and current_user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only ADMIN can create users with elevated roles (HR, PM, MANAGER, ADMIN)"
+        )
+    
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_in.email).first()
     if existing_user:
@@ -36,9 +64,9 @@ async def register(
         email=user_in.email,
         hashed_password=get_password_hash(user_in.password),
         full_name=user_in.full_name,
-        phone=user_in.phone,
         role=user_in.role,
         contract_id=user_in.contract_id,
+        department_id=user_in.department_id,
         reports_to_id=user_in.reports_to_id
     )
     

@@ -9,11 +9,11 @@ from app.core.database import Base
 
 class UserRole(str, enum.Enum):
     """User role enumeration."""
-    ADMIN = "admin"
-    HR = "hr"
-    PROGRAM_MANAGER = "program_manager"
-    TECH_LEAD = "tech_lead"
-    STAFF = "staff"
+    ADMIN = "admin"  # Full system access
+    HR = "hr"  # HR staff - can create users, beneficiaries, manage onboarding
+    PM = "pm"  # Project Manager - sees everything under org structure + metrics
+    MANAGER = "manager"  # Team lead - sees reports under hierarchy (no advanced metrics)
+    BENEFICIARY = "beneficiary"  # Foreign national - view own cases only
 
 
 class User(Base):
@@ -22,13 +22,18 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    
+    # Authentication
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    full_name = Column(String(255), nullable=False)
-    phone = Column(String(50), nullable=True)
-    role = Column(Enum(UserRole), nullable=False, default=UserRole.STAFF)
     
-    # Contract association
+    # Identity
+    full_name = Column(String(255), nullable=False)
+    
+    # Authorization
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.BENEFICIARY)
+    
+    # Organizational Structure
     contract_id = Column(String(36), ForeignKey("contracts.id"), nullable=True)
     
     # Department/Organizational unit
@@ -56,11 +61,11 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
-    contract = relationship("Contract", back_populates="users", lazy="select")
+    contract = relationship("Contract", foreign_keys=[contract_id], back_populates="users", lazy="select")
     department = relationship("Department", back_populates="users", foreign_keys=[department_id], lazy="select")
     reports_to = relationship("User", remote_side=[id], backref="direct_reports", lazy="select")
-    visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.user_id", back_populates="user", cascade="all, delete-orphan", overlaps="created_visa_applications,creator", lazy="select")
-    created_visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.created_by", back_populates="creator", overlaps="visa_applications,user", lazy="select")
+    beneficiary = relationship("Beneficiary", back_populates="user", uselist=False, lazy="select")
+    created_visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.created_by", back_populates="creator", lazy="select")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan", lazy="select")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan", lazy="select")
     settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="select")

@@ -11,6 +11,25 @@ class ContractBase(BaseModel):
     start_date: date
     end_date: Optional[date] = None
     status: ContractStatus = ContractStatus.ACTIVE
+    
+    # Management
+    manager_user_id: Optional[str] = None
+    
+    # Client information
+    client_name: Optional[str] = Field(None, max_length=255)
+    client_contact_name: Optional[str] = Field(None, max_length=255)
+    client_contact_email: Optional[str] = Field(None, max_length=255)
+    client_contact_phone: Optional[str] = Field(None, max_length=50)
+    
+    # Billing information
+    billing_rate: Optional[float] = None
+    billing_frequency: Optional[str] = Field(None, max_length=50)
+    billing_contact_name: Optional[str] = Field(None, max_length=255)
+    billing_contact_email: Optional[str] = Field(None, max_length=255)
+    
+    # Additional details
+    description: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class ContractCreate(ContractBase):
@@ -25,6 +44,25 @@ class ContractUpdate(BaseModel):
     start_date: Optional[date] = None
     end_date: Optional[date] = None
     status: Optional[ContractStatus] = None
+    
+    # Management
+    manager_user_id: Optional[str] = None
+    
+    # Client information
+    client_name: Optional[str] = Field(None, max_length=255)
+    client_contact_name: Optional[str] = Field(None, max_length=255)
+    client_contact_email: Optional[str] = Field(None, max_length=255)
+    client_contact_phone: Optional[str] = Field(None, max_length=50)
+    
+    # Billing information
+    billing_rate: Optional[float] = None
+    billing_frequency: Optional[str] = Field(None, max_length=50)
+    billing_contact_name: Optional[str] = Field(None, max_length=255)
+    billing_contact_email: Optional[str] = Field(None, max_length=255)
+    
+    # Additional details
+    description: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class Contract(ContractBase):

@@ -11,7 +11,12 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # Database
-    DATABASE_URL: str = "sqlite:///./ama_impact.db"
+    DB_NAME: str = "ama-impact.db"  # Can be overridden with env var: ama-impact.db or devel.db
+    
+    @property
+    def DATABASE_URL(self) -> str:
+        """Construct database URL from DB_NAME."""
+        return f"sqlite:///./{ self.DB_NAME}"
     
     # Security
     SECRET_KEY: str
@@ -38,9 +43,15 @@ class Settings(BaseSettings):
     NOTIFICATION_CHECK_HOUR: int = 8
     NOTIFICATION_CHECK_MINUTE: int = 0
     
+    # Initial Admin User (for database initialization)
+    INITIAL_ADMIN_EMAIL: str = "admin@example.com"
+    INITIAL_ADMIN_PASSWORD: str = "ChangeMe123!"
+    INITIAL_ADMIN_NAME: str = "System Administrator"
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra fields in .env for backward compatibility
 
 
 settings = Settings()

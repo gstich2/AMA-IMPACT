@@ -5,17 +5,17 @@ from app.models.user import UserRole
 
 
 class UserBase(BaseModel):
-    """Base user schema."""
+    """Base user schema - for authentication and organizational structure only."""
     email: EmailStr
     full_name: str = Field(..., min_length=1, max_length=255)
-    phone: Optional[str] = Field(None, max_length=50)
-    role: UserRole = UserRole.STAFF
+    role: UserRole = UserRole.BENEFICIARY
 
 
 class UserCreate(UserBase):
     """Schema for creating a user."""
     password: str = Field(..., min_length=8)
     contract_id: Optional[str] = None
+    department_id: Optional[str] = None
     reports_to_id: Optional[str] = None
 
 
@@ -23,9 +23,9 @@ class UserUpdate(BaseModel):
     """Schema for updating a user."""
     email: Optional[EmailStr] = None
     full_name: Optional[str] = Field(None, min_length=1, max_length=255)
-    phone: Optional[str] = Field(None, max_length=50)
     role: Optional[UserRole] = None
     contract_id: Optional[str] = None
+    department_id: Optional[str] = None
     reports_to_id: Optional[str] = None
     is_active: Optional[bool] = None
 
@@ -36,6 +36,7 @@ class UserInDB(UserBase):
     
     id: str
     contract_id: Optional[str] = None
+    department_id: Optional[str] = None
     reports_to_id: Optional[str] = None
     is_active: bool
     last_login: Optional[datetime] = None

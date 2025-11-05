@@ -1,41 +1,51 @@
 # AMA-IMPACT
 ## Immigration Visa Management System
 
+**Version 2.0** - Complete case management with todo tracking and hierarchical organization
+
 A comprehensive FastAPI + Next.js application for tracking and managing foreign national employee visa and green card applications across multiple company contracts.
 
-## 🚀 Quick Start
+## ✨ What's New in v2.0
+
+- 🗂️ **Case Groups**: Organize related visa applications into immigration pathways
+- ✅ **Todo System**: Task tracking with computed metrics (overdue status, completion time)
+- � **Role-Based User Creation**: Enhanced security with permission controls
+- 📚 **Complete Documentation**: MkDocs site with comprehensive guides
+- 🔧 **Modular Fixtures**: Improved database seeding system
+
+## �🚀 Quick Start
 
 ### Prerequisites
-- Python 3.11+
+- Python 3.12+
 - Node.js 18+
 - Git
 
 ### Backend Setup (FastAPI)
 
 ```bash
-# Navigate to backend directory
-cd backend
+# Clone repository
+git clone https://github.com/gstich2/AMA-IMPACT.git
+cd AMA-IMPACT
 
 # Create virtual environment
-python -m venv venv
+python -m venv .venv
 
-# Activate virtual environment
-# On Linux/Mac:
-source venv/bin/activate
-# On Windows:
-# venv\Scripts\activate
+# Activate virtual environment (Linux/Mac)
+source .venv/bin/activate
+# On Windows: .venv\Scripts\activate
 
 # Install dependencies
+cd backend
 pip install -r requirements.txt
 
-# Initialize database
-alembic upgrade head
+# Setup database with sample data
+python scripts/setup_dev_environment.py
 
 # Run development server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --port 8000
 ```
 
-Backend will be available at: `http://localhost:8000`
+Backend available at: `http://localhost:8000`  
 API Documentation: `http://localhost:8000/docs`
 
 ### Frontend Setup (Next.js)
@@ -86,12 +96,28 @@ AMA-IMPACT/
 
 ## 🔑 Key Features
 
-- **Role-Based Access Control**: 5 user roles (Admin, HR, Program Manager, Tech Lead, Staff)
-- **Hierarchical Visibility**: Users see only their contract data and reports
-- **Visa Tracking**: Support for H-1B, L-1, O-1, TN, EB-1A/B, EB-2, PERM, OPT, EAD, Green Card
-- **Automated Notifications**: Email alerts for visa expirations (90/60/30/14/7 days)
-- **Analytics Dashboard**: Expiration timelines, status breakdowns, contract reports
+### Core Functionality
+- **Role-Based Access Control**: 5 user roles (ADMIN, HR, PM, MANAGER, BENEFICIARY)
+- **Hierarchical Visibility**: Users see data based on organizational structure
+- **Visa Tracking**: H-1B, L-1, O-1, TN, EB-1A/B, EB-2, PERM, OPT, EAD, Green Card
+- **Case Groups**: Organize related visa applications (e.g., H1B → Green Card pathway)
+- **Beneficiary System**: Separation of users from foreign nationals
+
+### Task Management
+- **Todo System** with hierarchical linking to visa apps, case groups, beneficiaries
+- **Computed Metrics**: 
+  - `is_overdue` - Dynamic overdue calculation
+  - `days_overdue` - Time past due date
+  - `days_to_complete` - Completion duration
+  - `completed_on_time` - On-time performance tracking
+- **Dashboard Views**: Personal and team todos with filtering
+- **Role-Based Visibility**: See tasks based on assignment and hierarchy
+
+### Administration
+- **User Creation Control**: Role-based permissions for creating users
 - **Audit Trail**: Complete history of all data modifications
+- **Automated Notifications**: Email alerts for visa expirations (planned)
+- **Analytics Dashboard**: Expiration timelines, status breakdowns, reports
 - **Export Reports**: CSV export for compliance and reporting
 
 ## 🛠️ Technology Stack
@@ -116,13 +142,13 @@ AMA-IMPACT/
 
 ## 📊 User Roles
 
-| Role | Access Level | Permissions |
-|------|-------------|-------------|
-| **Admin** | System-wide | Full access to all contracts, users, and settings |
-| **HR** | Multi-contract | View/edit assigned contracts, generate reports |
-| **Program Manager** | Contract-wide | View/edit entire contract, receive critical alerts |
-| **Tech Lead** | Team-level | View/edit direct and indirect reports |
-| **Staff** | Self-only | View own visa status, receive personal alerts |
+| Role | Access Level | Permissions | User Creation Rights |
+|------|-------------|-------------|---------------------|
+| **ADMIN** | System-wide | Full access to all data and settings | Can create any role |
+| **HR** | Multi-contract | Manage visa applications, view all beneficiaries | Can create BENEFICIARY users only |
+| **PM** | Contract-wide | View all data + advanced metrics | Can create BENEFICIARY users only |
+| **MANAGER** | Team-level | View/edit direct and indirect reports | Can create BENEFICIARY users only |
+| **BENEFICIARY** | Self-only | View own visa cases and todos | Cannot create users |
 
 ## 🔐 Security Features
 
@@ -200,33 +226,61 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 
 ## 🗺️ Roadmap
 
-### Phase 1: MVP (Current)
+### ✅ Phase 1: MVP (Completed - v1.0)
 - ✅ Authentication & authorization
 - ✅ User & contract management
 - ✅ Visa application CRUD
-- ✅ Basic dashboard
-- ✅ Email notifications
+- ✅ Beneficiary system
+- ✅ Audit trail
 
-### Phase 2: Core Features
-- [ ] Hierarchical reporting
-- [ ] Advanced analytics
+### ✅ Phase 2: Core Features (Completed - v2.0)
+- ✅ Case Groups for immigration pathways
+- ✅ Todo system with computed metrics
+- ✅ Hierarchical task visibility
+- ✅ Role-based user creation
+- ✅ Modular fixture system
+- ✅ Complete documentation (MkDocs)
+
+### 🚧 Phase 3: Enhancements (In Progress)
+- [ ] Frontend implementation (Next.js)
+- [ ] Email notification system
+- [ ] Advanced analytics dashboard
 - [ ] In-app notifications
-- [ ] Audit log viewer
-- [ ] User settings
+- [ ] User settings management
 
-### Phase 3: Enhancements
+### 📋 Phase 4: Future
 - [ ] Multi-contract user assignment
 - [ ] Microsoft SSO integration
-- [ ] Document uploads
+- [ ] Document upload and management
 - [ ] Workflow approvals
-- [ ] Mobile app
+- [ ] Mobile app (React Native)
+- [ ] USCIS case status API integration
 
 ## 📖 Documentation
 
-- **[PRD.md](PRD.md)** - Complete product requirements
-- **API Docs** - Available at `/docs` when backend is running
-- **User Guide** - See `docs/user-guide.md`
-- **Deployment Guide** - See `docs/deployment.md`
+Complete documentation available in the `docs/` directory:
+
+- **[Quick Start](docs/getting-started/quickstart.md)** - Get running in 10 minutes
+- **[Data Models](docs/architecture/data-models.md)** - Complete database schema with CaseGroup and Todo
+- **[API Reference](docs/api/overview.md)** - All endpoints with examples
+- **[Development Guide](docs/development/setup.md)** - Setup, fixtures, testing, workflow
+- **[Changelog](docs/changelog.md)** - Version history and migration guide
+- **[PRD](PRD.md)** - Product requirements document
+- **API Interactive Docs** - Available at `/docs` when backend is running
+
+### Documentation Site
+
+To view the full documentation site:
+
+```bash
+# Install MkDocs
+pip install mkdocs-material mkdocs-awesome-pages-plugin
+
+# Serve documentation
+mkdocs serve
+
+# View at http://localhost:8001
+```
 
 ## 🤝 Contributing
 
