@@ -14,6 +14,13 @@ class AuditAction(str, enum.Enum):
     DELETE = "delete"
     LOGIN = "login"
     LOGOUT = "logout"
+    LOGIN_FAILED = "login_failed"
+    EXPORT = "export"
+    VIEW = "view"
+    SYSTEM = "system"
+    VISA_EXPIRING = "visa_expiring"
+    STATUS_CHANGED = "status_changed"
+    OVERDUE = "overdue"
 
 
 class AuditLog(Base):

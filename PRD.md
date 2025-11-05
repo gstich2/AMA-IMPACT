@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 ## Immigration Visa Management System
 
-**Version:** 2.0  
+**Version:** 3.0  
 **Date:** November 5, 2025  
-**Status:** Active - Implementation Complete  
+**Status:** Production Ready - Backend Complete  
 **Owner:** Engineering Team
 
 ---
@@ -23,13 +23,15 @@ Currently, visa tracking is managed through spreadsheets, leading to:
 
 ### 1.3 Solution Overview
 A FastAPI backend + Next.js frontend application with:
-- Role-based access control (RBAC) with hierarchical visibility
-- **Case Groups** for organizing related visa applications (NEW in v2.0)
-- **Todo System** with computed performance metrics (NEW in v2.0)
-- Automated email notifications for expiration dates (planned)
-- Contract-based organizational structure
-- Comprehensive visa lifecycle tracking
-- Analytics and reporting dashboard
+- **Complete Backend API** - 100+ endpoints across 14 modules (v3.0)
+- **Role-based access control (RBAC)** with 5 hierarchical user roles
+- **Case Groups** for organizing related visa applications
+- **Todo System** with computed performance metrics and overdue tracking
+- **Notifications System** with automated alerts and messaging (v3.0)
+- **Comprehensive Audit Logging** with compliance reporting (v3.0)
+- **Advanced Analytics** with executive dashboards and reporting (v3.0)
+- **Contract-based organizational structure** with department hierarchy
+- **Production-ready security** with JWT authentication and rate limiting
 
 ### 1.4 Success Metrics
 - **Zero missed renewals** within 30-day warning window
@@ -42,50 +44,58 @@ A FastAPI backend + Next.js frontend application with:
 
 ## 2. User Personas & Roles
 
-### 2.1 Staff (Employee)
+### 2.1 BENEFICIARY (Foreign National Employee)
 **Primary Goal:** View personal visa status and upcoming deadlines  
-**Access Level:** Own records only (read-only)  
+**Access Level:** Own records only (self-access)  
 **Key Actions:**
-- View own visa applications and status
-- See upcoming expiration dates
-- Receive email alerts for renewals
-- Update limited fields (e.g., current address, emergency contact)
+- View own visa applications and current status
+- See personal task assignments and deadlines
+- Receive automated expiration alerts
+- Update limited personal information
 
-### 2.2 Technical Lead (Tech Lead)
-**Primary Goal:** Monitor team visa compliance and prevent lapses  
-**Access Level:** Direct and indirect reports within contract  
-**Key Actions:**
-- View team member visa status
-- Identify upcoming expirations
-- Add/edit visa records for reports
-- Receive escalation alerts for overdue renewals
-- Export team reports
+**Implementation Status:** ✅ Complete - Full self-access with task visibility
 
-### 2.3 Program Manager (PM) / Deputy PM
-**Primary Goal:** Ensure contract-wide visa compliance  
-**Access Level:** All employees within assigned contract  
+### 2.2 MANAGER (Team Lead/Supervisor)
+**Primary Goal:** Monitor team visa compliance and task completion  
+**Access Level:** Direct and indirect reports based on organizational hierarchy  
 **Key Actions:**
-- View entire contract roster
-- Generate compliance reports
-- Receive critical escalation alerts
-- Approve visa-related actions (optional workflow)
-- Track visa costs and timelines (future)
+- View team member visa status and tasks
+- Identify upcoming expirations within team
+- Create visa applications and tasks for reports
+- Receive escalated alerts for team compliance issues
+- Export team-specific reports
 
-### 2.4 HR Representative
-**Primary Goal:** Manage visa data and generate cross-contract reports  
-**Access Level:** Assigned contracts (one or more)  
-**Key Actions:**
-- Create/edit/archive employee visa records
-- Manage visa types and statuses
-- Generate analytics and reports
-- Configure notification schedules
-- Export data for audits (CSV)
+**Implementation Status:** ✅ Complete - Hierarchical access with team management
 
-### 2.5 System Administrator
-**Primary Goal:** System configuration and user management  
-**Access Level:** All contracts and system settings  
+### 2.3 PM (Program Manager)
+**Primary Goal:** Ensure contract-wide visa compliance and analytics  
+**Access Level:** All employees and data within assigned contract  
 **Key Actions:**
-- Manage user accounts and roles
+- View entire contract roster and analytics
+- Generate comprehensive compliance reports
+- Access advanced dashboard metrics and trends
+- Create beneficiary user accounts
+- Track contract-wide performance and deadlines
+
+**Implementation Status:** ✅ Complete - Contract-wide access with advanced analytics
+
+### 2.4 HR (Human Resources)
+**Primary Goal:** Multi-contract visa management and compliance oversight  
+**Access Level:** Multiple contracts with cross-contract reporting capabilities  
+**Key Actions:**
+- Manage visa data across assigned contracts
+- Generate cross-contract analytics and audit reports
+- Configure system-wide notification policies
+- Create beneficiary user accounts
+- Export comprehensive compliance data
+
+**Implementation Status:** ✅ Complete - Multi-contract access with full reporting
+
+### 2.5 ADMIN (System Administrator)
+**Primary Goal:** Complete system administration and configuration  
+**Access Level:** Full system access across all contracts and settings  
+**Key Actions:**
+- Manage all user accounts and role assignments
 - Assign users to contracts
 - Configure system-wide settings
 - View audit logs
@@ -97,7 +107,7 @@ A FastAPI backend + Next.js frontend application with:
 
 ### 3.1 Authentication & Authorization
 
-**F-001: User Authentication**
+**F-001: User Authentication** ✅ **COMPLETE**
 - **As a** user, **I want to** log in with email/password, **so that** I can securely access the system
 - **Acceptance Criteria:**
   - Login form with email + password
@@ -105,13 +115,17 @@ A FastAPI backend + Next.js frontend application with:
   - Rate limiting: 5 failed attempts = 15-min lockout
   - Password requirements: min 8 chars, 1 uppercase, 1 number, 1 special char
 
-**F-002: Role-Based Access Control**
+**Implementation Status:** ✅ Complete - Full JWT authentication with refresh tokens and rate limiting
+
+**F-002: Role-Based Access Control** ✅ **COMPLETE**
 - **As a** system admin, **I want to** assign roles to users, **so that** they see only appropriate data
 - **Acceptance Criteria:**
-  - Five roles: Admin, HR, Program Manager, Tech Lead, Staff
+  - Five roles: ADMIN, HR, PM, MANAGER, BENEFICIARY
   - Hierarchical visibility enforced at API level
   - Users cannot access other contracts' data
   - Middleware validates permissions on every request
+
+**Implementation Status:** ✅ Complete - Full RBAC with hierarchical data scoping and automatic filtering
 
 **F-003: Password Reset**
 - **As a** user, **I want to** reset my forgotten password, **so that** I can regain access

@@ -22,34 +22,34 @@ After running `python scripts/setup_dev_environment.py`, the following test user
 ### 3. Program Manager
 - **Email**: `pm@ama-impact.com`
 - **Password**: `PM123!`
-- **Role**: PROGRAM_MANAGER
+- **Role**: PM
 - **Contract**: ASSESS-2025
 - **Department**: None (contract-level)
 - **Access**: Full access to ASSESS contract (all departments)
 
-### 4. Technical Lead (TS Manager)
-- **Email**: `techlead@ama-impact.com`
-- **Password**: `Tech123!`
-- **Role**: TECH_LEAD
+### 4. Department Manager (TS Manager)
+- **Email**: `manager@ama-impact.com`
+- **Password**: `Manager123!`
+- **Role**: MANAGER
 - **Contract**: ASSESS-2025
 - **Department**: TS (Code TS)
 - **Reports to**: Program Manager
 - **Manages**: TS department (includes TSM, TSA sub-departments)
 - **Access**: Can view TS, TSM, and TSA department users and their visas
 
-### 5. Staff Member (TSM)
-- **Email**: `staff@ama-impact.com`
-- **Password**: `Staff123!`
-- **Role**: STAFF
+### 5. Beneficiary User (TSM)
+- **Email**: `beneficiary@ama-impact.com`
+- **Password**: `Beneficiary123!`
+- **Role**: BENEFICIARY
 - **Contract**: ASSESS-2025
 - **Department**: TSM (under TS)
-- **Reports to**: Technical Lead
+- **Reports to**: Department Manager
 - **Access**: Can only view own data
 
-### 6. Staff Member (TNA)
-- **Email**: `staff.tna@ama-impact.com`
-- **Password**: `Staff123!`
-- **Role**: STAFF
+### 6. Beneficiary User (TNA)
+- **Email**: `beneficiary.tna@ama-impact.com`
+- **Password**: `Beneficiary123!`
+- **Role**: BENEFICIARY
 - **Contract**: ASSESS-2025
 - **Department**: TNA
 - **Reports to**: Program Manager
@@ -91,11 +91,11 @@ ADMIN (System-wide)
 
 1. **ADMIN**: Sees everything across all contracts and departments
 2. **HR**: Sees all assigned contracts and their departments
-3. **PROGRAM_MANAGER**: Sees entire contract (all departments)
-4. **TECH_LEAD** (Department Manager): 
+3. **PM**: Sees entire contract (all departments)
+4. **MANAGER**: 
    - Sees own department + all child departments
    - Example: TS manager sees TS, TSM, TSA users
-5. **STAFF**: Only sees own data
+5. **BENEFICIARY**: Only sees own data
 
 ## Department Features
 
@@ -114,11 +114,12 @@ ADMIN (System-wide)
 ## Notes
 
 - All passwords follow the pattern: `[Role]123!`
-- Staff can only see their own visa applications
-- Department managers can see all users in their department + sub-departments
+- Beneficiaries can only see their own visa applications and tasks
+- Department managers can see all users in their department + sub-departments  
 - Program Managers can see all departments in their contract
 - HR can see all departments across assigned contracts
 - Admin has full system access
+- **New in v3.0**: Complete notification system, audit logging, and advanced reporting
 
 ---
 

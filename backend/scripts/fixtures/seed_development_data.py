@@ -356,6 +356,9 @@ def seed_development_data():
         # CASE 2: Lei - H1B Renewal (Standalone)
         lei_user, lei_ben = created_beneficiaries[1]
         
+        # Create realistic expiration date (45 days from now - URGENT)
+        lei_expiration = (datetime.now() + timedelta(days=45)).date()
+        
         lei_h1b = VisaApplication(
             beneficiary_id=lei_ben.id,
             case_group_id=None,  # Standalone application
@@ -371,17 +374,20 @@ def seed_development_data():
             case_status=VisaCaseStatus.ACTIVE,
             priority=VisaPriority.CRITICAL,
             current_stage='Filed - Awaiting Receipt',
-            filing_date=date(2025, 10, 1),
-            expiration_date=date(2028, 12, 31),
+            filing_date=date(2024, 10, 1),
+            expiration_date=lei_expiration,
             receipt_number='WAC2590234567',
             company_case_id='ASSESS-H1B-LEI-RENEWAL',
             premium_processing=True,
-            notes='H1B extension - expires 12/31/2025, urgent'
+            notes=f'H1B extension - expires {lei_expiration.strftime("%m/%d/%Y")}, urgent'
         )
         db.add(lei_h1b)
         
         # CASE 3: Carlos - TN Extension (Standalone)
         carlos_user, carlos_ben = created_beneficiaries[2]
+        
+        # Create expiration date (90 days from now - MEDIUM urgency)
+        carlos_expiration = (datetime.now() + timedelta(days=90)).date()
         
         carlos_tn = VisaApplication(
             beneficiary_id=carlos_ben.id,
@@ -391,11 +397,12 @@ def seed_development_data():
             responsible_party_id=pm_user.id,
             visa_type=VisaTypeEnum.TN,
             petition_type='TN Application',
-            status=VisaStatus.DRAFT,
-            case_status=VisaCaseStatus.UPCOMING,
+            status=VisaStatus.IN_PROGRESS,
+            case_status=VisaCaseStatus.ACTIVE,
             priority=VisaPriority.MEDIUM,
+            expiration_date=carlos_expiration,
             company_case_id='ASSESS-TN-CARLOS-RENEWAL',
-            notes='TN renewal - planning to file in December 2025'
+            notes=f'TN renewal - expires {carlos_expiration.strftime("%m/%d/%Y")}'
         )
         db.add(carlos_tn)
         
@@ -433,7 +440,69 @@ def seed_development_data():
         )
         db.add(elena_i140)
         
-        print(f"      ✓ Created 2 case groups and 7 visa applications")
+        # CASE 5: Add an OVERDUE H1B for testing urgent scenarios
+        # Use fourth beneficiary (if exists) or create a simple standalone overdue visa
+        if len(created_beneficiaries) > 3:
+            fourth_user, fourth_ben = created_beneficiaries[3]
+        else:
+            # Use Lei's beneficiary for an additional overdue visa
+            fourth_user, fourth_ben = created_beneficiaries[1]
+        
+        overdue_expiration = (datetime.now() - timedelta(days=15)).date()  # 15 days overdue
+        
+        overdue_h1b = VisaApplication(
+            beneficiary_id=fourth_ben.id,
+            case_group_id=None,
+            visa_type_id=h1b_type.id,
+            created_by=admin.id,
+            law_firm_id=law_firm.id,
+            responsible_party_id=pm_user.id,
+            attorney_name=law_firm.contact_person,
+            attorney_email=law_firm.email,
+            visa_type=VisaTypeEnum.H1B,
+            petition_type='I-129',
+            status=VisaStatus.APPROVED,
+            case_status=VisaCaseStatus.FINALIZED,  # Use FINALIZED for expired visa
+            priority=VisaPriority.CRITICAL,
+            current_stage='Expired - Extension Required',
+            filing_date=date(2021, 8, 1),
+            approval_date=date(2021, 10, 1),
+            expiration_date=overdue_expiration,
+            receipt_number='WAC2190123456',
+            company_case_id='ASSESS-H1B-EXPIRED-TEST',
+            premium_processing=False,
+            notes=f'H1B EXPIRED on {overdue_expiration.strftime("%m/%d/%Y")} - URGENT EXTENSION NEEDED'
+        )
+        db.add(overdue_h1b)
+        
+        # CASE 6: Add an EAD expiring in 6 months (not urgent but within range)
+        future_expiration = (datetime.now() + timedelta(days=180)).date()
+        
+        future_ead = VisaApplication(
+            beneficiary_id=priya_ben.id,
+            case_group_id=None,
+            visa_type_id=ead_type.id,
+            created_by=admin.id,
+            law_firm_id=law_firm.id,
+            responsible_party_id=pm_user.id,
+            attorney_name=law_firm.contact_person,
+            attorney_email=law_firm.email,
+            visa_type=VisaTypeEnum.EAD,
+            petition_type='I-765',
+            status=VisaStatus.APPROVED,
+            case_status=VisaCaseStatus.ACTIVE,
+            priority=VisaPriority.LOW,
+            current_stage='Approved - Valid Until Expiration',
+            approval_date=date(2023, 6, 1),
+            expiration_date=future_expiration,
+            receipt_number='MSC2390567890',
+            company_case_id='ASSESS-EAD-PRIYA-CURRENT',
+            premium_processing=False,
+            notes=f'Current EAD valid until {future_expiration.strftime("%m/%d/%Y")}'
+        )
+        db.add(future_ead)
+        
+        print(f"      ✓ Created 2 case groups and 9 visa applications (including test expiration dates)")
         
         # ============================================================
         # 5. CREATE DEPENDENTS
@@ -467,7 +536,7 @@ def seed_development_data():
         print("\n   Creating todos...")
         
         from app.models.todo import Todo, TodoStatus, TodoPriority
-        from datetime import timedelta
+        # timedelta already imported at top level
         
         # Todo 1: Submit I-485 for Priya (urgent, assigned to HR)
         todo1 = Todo(
