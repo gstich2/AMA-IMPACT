@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """
 Seed development data for testing.
-Creates a complete dataset based on ASSESS program structure:
-- Departments (TS, TSM, TSA, TNA, AV)
-- Users (HR, PM, Managers, Beneficiaries)
-- Beneficiaries with visa information
-- Case Groups (for multi-step processes)
-- Visa Applications
-- Dependents
+Creates sample data using existing ASSESS contract structure:
+- Uses departments from seed_assess.py (TS, TSM, TSA, TNA, AV)
+- Creates additional test users (HR, Managers, Beneficiaries)
+- Creates beneficiaries with visa information
+- Creates case groups (for multi-step processes)
+- Creates visa applications
+- Creates dependents
+
+Prerequisites: Run these fixtures first:
+1. seed_visa_types.py
+2. seed_assess.py (creates contract + departments + PM)
+3. seed_law_firms.py
 """
 
 import sys
@@ -72,61 +77,36 @@ def seed_development_data():
         print("   ✓ Found existing data (admin, contract, law firm, visa types)")
         
         # ============================================================
-        # 2. CREATE DEPARTMENTS (ASSESS Structure)
+        # 2. GET EXISTING DEPARTMENTS (created by seed_assess.py)
         # ============================================================
         
-        print("\n   Creating departments...")
+        print("\n   Loading existing departments...")
         
-        # Top-level department: Technology Systems (TS)
-        dept_ts = Department(
-            name='Technology Systems',
-            code='TS',
-            description='Technology Systems Division',
-            contract_id=assess_contract.id,
-            parent_id=None,
-            level=1
-        )
-        db.add(dept_ts)
-        db.flush()
+        # Query departments created by seed_assess.py
+        dept_ts = db.query(Department).filter(
+            Department.code == 'TS',
+            Department.contract_id == assess_contract.id
+        ).first()
+        dept_tsm = db.query(Department).filter(
+            Department.code == 'TSM',
+            Department.contract_id == assess_contract.id
+        ).first()
+        dept_tsa = db.query(Department).filter(
+            Department.code == 'TSA',
+            Department.contract_id == assess_contract.id
+        ).first()
+        dept_tna = db.query(Department).filter(
+            Department.code == 'TNA',
+            Department.contract_id == assess_contract.id
+        ).first()
+        dept_av = db.query(Department).filter(
+            Department.code == 'AV',
+            Department.contract_id == assess_contract.id
+        ).first()
         
-        # Sub-departments under TS
-        dept_tsm = Department(
-            name='Technology Systems Management',
-            code='TSM',
-            description='Systems Management Team',
-            contract_id=assess_contract.id,
-            parent_id=dept_ts.id,
-            level=2
-        )
-        dept_tsa = Department(
-            name='Technology Systems Administration',
-            code='TSA',
-            description='Systems Administration Team',
-            contract_id=assess_contract.id,
-            parent_id=dept_ts.id,
-            level=2
-        )
-        db.add_all([dept_tsm, dept_tsa])
-        
-        # Flat departments (no parent)
-        dept_tna = Department(
-            name='Technology Network Administration',
-            code='TNA',
-            description='Network Administration Team',
-            contract_id=assess_contract.id,
-            parent_id=None,
-            level=1
-        )
-        dept_av = Department(
-            name='Audio Visual',
-            code='AV',
-            description='Audio Visual Support Team',
-            contract_id=assess_contract.id,
-            parent_id=None,
-            level=1
-        )
-        db.add_all([dept_tna, dept_av])
-        db.flush()
+        if not all([dept_ts, dept_tsm, dept_tsa, dept_tna, dept_av]):
+            print("   ❌ ASSESS departments not found! Run seed_assess.py first.")
+            return False
         
         print(f"      ✓ Created 5 departments (TS→TSM/TSA, TNA, AV)")
         

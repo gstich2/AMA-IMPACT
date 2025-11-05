@@ -14,7 +14,8 @@ Usage:
 Or run individual scripts:
     python scripts/init_database.py
     python scripts/fixtures/seed_visa_types.py
-    python scripts/fixtures/seed_contracts.py
+    python scripts/fixtures/contracts/seed_assess.py
+    python scripts/fixtures/contracts/seed_rses.py
     python scripts/fixtures/seed_law_firms.py
     python scripts/fixtures/seed_development_data.py
 """
@@ -56,7 +57,8 @@ def setup_dev_environment():
     scripts = [
         (SCRIPTS_DIR / "init_database.py", "Initialize Database"),
         (SCRIPTS_DIR / "fixtures" / "seed_visa_types.py", "Seed Visa Types"),
-        (SCRIPTS_DIR / "fixtures" / "seed_contracts.py", "Seed Contracts"),
+        (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess.py", "Seed ASSESS Contract"),
+        (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_rses.py", "Seed RSES Contract"),
         (SCRIPTS_DIR / "fixtures" / "seed_law_firms.py", "Seed Law Firms"),
         (SCRIPTS_DIR / "fixtures" / "seed_development_data.py", "Seed Development Data"),
     ]

@@ -1,54 +1,97 @@
-# Test Fixtures
+# Fixtures System
 
-Test data files that can be loaded into the database.
+Modular database fixtures for AMA-IMPACT.
 
-## `development_data.py`
+## Overview
 
-Creates comprehensive test data for development.
+Fixtures are organized by responsibility:
+- **Global resources**: Visa types, law firms (shared across contracts)
+- **Contract-specific**: Each contract has its own setup file
+- **Development data**: Test beneficiaries, cases, todos
 
-**Contains:**
-- 2 Contracts (ASSESS-2025, RESESS-2025)
-- 5 Departments with hierarchy (TS → TSM/TSA, TNA, AV)
-- 5 Test Users (HR, PM, Tech Lead, 2 Staff)
-- 12 Visa Types (H1B, L1, O1, TN, EB-types, PERM, OPT, EAD, Green Card)
+## Structure
 
-**Usage:**
+```
+fixtures/
+├── README.md                     # This file
+├── seed_visa_types.py            # Global: 14 visa type definitions
+├── seed_law_firms.py             # Global: Law firm vendors
+├── contracts/                    # Contract-specific setups
+│   ├── seed_assess.py            # ASSESS contract + depts + PM/Manager
+│   └── seed_rses.py              # RSES contract + depts + PM
+└── seed_development_data.py      # Test data: beneficiaries, cases, todos
+```
+
+## Running Fixtures
+
+**All fixtures (recommended):**
 ```bash
-cd backend/scripts
-./load_fixtures.sh  # Wrapper script that calls this
+cd backend
+python scripts/setup_dev_environment.py
 ```
 
-**Don't run directly** - the wrapper script sets up the environment correctly.
-
-## Database Connection
-
-The script connects to the database specified by `DB_NAME` in your active `.env` file:
-
-```
-.env file → Shell exports DB_NAME → Python imports config
-    → SQLAlchemy connects to sqlite:///./[DB_NAME]
-```
-
-## Adding Test Data
-
-To add more fixtures:
-
-1. Open `development_data.py`
-2. Add data in `seed_database()` function
-3. Use SQLAlchemy models
-
-Example:
-```python
-new_contract = Contract(
-    name='New Program',
-    code='NEW-2025',
-    start_date=date(2025, 1, 1),
-    status=ContractStatus.ACTIVE
-)
-db.add(new_contract)
-db.commit()
+**Individual fixtures:**
+```bash
+cd backend
+python scripts/fixtures/seed_visa_types.py
+python scripts/fixtures/contracts/seed_assess.py
+python scripts/fixtures/contracts/seed_rses.py
+python scripts/fixtures/seed_law_firms.py
+python scripts/fixtures/seed_development_data.py
 ```
 
-## Production
+## Contract Fixtures (contracts/)
 
-**Never** load fixtures in production! Only the admin user is created by `init_database.sh`.
+Each contract fixture is self-contained and creates:
+1. **Contract** - Name, code, dates, client info
+2. **Departments** - Organizational hierarchy
+3. **Program Manager** - With `force_password_change=True`
+4. **Managers** - Department leads with `force_password_change=True`
+
+### ASSESS Contract
+```bash
+python scripts/fixtures/contracts/seed_assess.py
+```
+Creates:
+- ASSESS contract (NASA ARC, 2025-2030)
+- 5 departments: TS → TSM/TSA, TNA, AV
+- PM: pm.assess@ama-impact.com (temp password: TempPassword123!)
+- Tech Lead: techlead.assess@ama-impact.com (temp password: TempPassword123!)
+
+### RSES Contract
+```bash
+python scripts/fixtures/contracts/seed_rses.py
+```
+Creates:
+- RSES contract (NASA LaRC, 2024-2026)
+- 2 departments: RD, ES
+- PM: pm.rses@ama-impact.com (temp password: TempPassword123!)
+
+## Security: Force Password Change
+
+**Production users** (PMs, Managers) are created with `force_password_change=True`:
+- Must change password on first login
+- Login returns 403 error until password is changed
+- Temporary password: `TempPassword123!`
+
+**Development users** (in `seed_development_data.py`) have `force_password_change=False` for convenience.
+
+## Adding a New Contract
+
+1. Copy `contracts/seed_assess.py` to `contracts/seed_yourcontract.py`
+2. Update contract details, departments, and users
+3. Add to `scripts/setup_dev_environment.py`:
+   ```python
+   (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_yourcontract.py", "Seed Your Contract"),
+   ```
+
+## Development Data
+
+`seed_development_data.py` creates test data:
+- Beneficiaries with various visa statuses
+- Case groups (immigration pathways)
+- Visa applications (H1B, EB2-NIW, etc.)
+- Todos with different priorities
+- Sample dependents
+
+**All development users have `force_password_change=False`** for testing convenience.

@@ -98,6 +98,13 @@ async def login(
             detail="Inactive user"
         )
     
+    # Check if password change is required
+    if user.force_password_change:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Password change required. Please change your password before logging in."
+        )
+    
     # Update last login
     user.last_login = datetime.utcnow()
     db.commit()
