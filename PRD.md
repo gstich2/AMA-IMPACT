@@ -127,7 +127,7 @@ A FastAPI backend + Next.js frontend application with:
 **F-004: Contract Management**
 - **As an** admin, **I want to** create and manage contracts, **so that** users can be organized by project
 - **Acceptance Criteria:**
-  - CRUD operations for contracts (e.g., ASSESS, RESESS)
+  - CRUD operations for contracts (e.g., ASSESS, RSES)
   - Each contract has: name, code, start date, end date, status (active/archived)
   - Archived contracts are read-only
 

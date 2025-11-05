@@ -2,7 +2,7 @@
 
 ## Default Test Users
 
-After running `backend/reset_db.sh`, the following test users are available:
+After running `python scripts/setup_dev_environment.py`, the following test users are available:
 
 ### 1. Administrator
 - **Email**: `admin@ama-impact.com`
@@ -58,15 +58,20 @@ After running `backend/reset_db.sh`, the following test users are available:
 ## Organizational Structure
 
 ```
-ASSESS-2025 (Contract)
-├── TS (Code) - Manager: techlead@ama-impact.com
-│   ├── TSM (Division) - Staff: staff@ama-impact.com
-│   └── TSA (Division)
-├── TNA (Division) - Staff: staff.tna@ama-impact.com
-└── AV (Division)
+ASSESS-2025 (Contract) - NASA Ames Research Center
+├── TS - Entry Systems and Technology Division (Parent)
+│   ├── TSM - Thermal Protection Materials Branch
+│   ├── TSA - Aerothermodynamics Branch
+│   ├── TSF - Thermo-Physics Facilities Branch
+│   └── TSS - Entry Systems and Vehicle Development Branch
+├── TNA - Computational Aerosciences Branch
+├── TNC - Advanced Computing Branch
+├── TNP - Computational Physics Branch
+└── AV - Aeromechanics Office
 
-RESESS-2025 (Contract)
-└── (No departments yet)
+RSES-2025 (Contract)
+├── RS - Robotics Division
+└── ES - Earth Science Division
 ```
 
 ## Role & Department Hierarchy
@@ -120,8 +125,12 @@ ADMIN (System-wide)
 ## 📊 Sample Data Included
 
 ### Contracts
-- ASSESS-2025 (Active)
-- RESESS-2025 (Active)
+- ASSESS-2025 (Active) - NASA Ames - 9 departments
+- RSES-2025 (Active) - NASA Ames - 2 departments
+
+### Departments (11 total)
+- **ASSESS**: TS (parent), TSM, TSA, TSF, TSS, TNA, TNC, TNP, AV (9 departments)
+- **RSES**: RS, ES (2 departments)
 
 ### Visa Types (12 types)
 - H1B - H-1B Specialty Occupation
@@ -141,23 +150,31 @@ ADMIN (System-wide)
 
 ## 🧪 Quick Test
 
-1. Start backend: `cd backend && ./start.sh`
+1. Start backend: `cd backend && uvicorn app.main:app --reload --port 8000`
 2. Open: http://localhost:8000/docs
 3. Click **Authorize** button
-4. Use **POST /api/v1/auth/login** with admin credentials
+4. Use **POST /api/v1/auth/login** with admin credentials:
+   - username: `admin@ama-impact.com`
+   - password: `Admin123!`
 5. Copy the `access_token` from response
 6. Click **Authorize** again and enter: `Bearer <access_token>`
 7. Now test any endpoint!
 
 ---
 
-## 🔄 Reset Database
+## 🔄 Setup Development Database
 
-To reset the database and recreate all sample data:
+To initialize the database with all fixtures:
 
 ```bash
 cd backend
-./reset_db.sh
+python scripts/setup_dev_environment.py
 ```
 
-**Warning:** This will delete ALL existing data!
+This creates:
+- 2 contracts (ASSESS, RSES)
+- 11 departments (9 ASSESS + 2 RSES)
+- 6 test users (admin, hr, pm, manager, 2 staff)
+- Sample beneficiaries, visa applications, case groups, and todos
+
+**Note:** This script will drop and recreate the database, deleting ALL existing data!

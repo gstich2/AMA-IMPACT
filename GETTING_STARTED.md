@@ -1,23 +1,22 @@
 # 🚀 Getting Started with AMA-IMPACT
 
+> **⚠️ This file contains condensed setup instructions. For comprehensive documentation, see:**
+> - **[Full Documentation](docs/)** - Complete guides and API reference
+> - **[Quick Start Guide](docs/getting-started/quickstart.md)** - Detailed 10-minute setup
+> - **[Development Guide](docs/development/setup.md)** - Development workflow and testing
+
 ## Project Overview
 
-**AMA-IMPACT** is a full-stack immigration visa management system built with:
-- **Backend:** FastAPI + SQLAlchemy + SQLite
+**AMA-IMPACT v2.0** is a full-stack immigration visa management system with:
+- **Backend:** FastAPI + SQLAlchemy + SQLite (WAL mode)
 - **Frontend:** Next.js 14 + TypeScript + Tailwind CSS
-- **Authentication:** JWT tokens with bcrypt password hashing
-- **Database:** SQLite with WAL mode (Write-Ahead Logging)
-
----
+- **Key Features:** Case Groups, Todo System, Hierarchical Departments, Role-Based Access
 
 ## 📋 Prerequisites
 
-Before you begin, ensure you have the following installed:
-
-- **Python 3.11+** ([Download](https://www.python.org/downloads/))
-- **Node.js 18+** ([Download](https://nodejs.org/))
-- **Git** ([Download](https://git-scm.com/))
-- **npm** or **yarn** (comes with Node.js)
+- **Python 3.12+**
+- **Node.js 18+**
+- **Git**
 
 ---
 
@@ -53,52 +52,32 @@ source ../.venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 5. Configure Environment Variables
+### 5. Setup Database with Fixtures
 
 ```bash
-cp .env.example .env
+python scripts/setup_dev_environment.py
 ```
 
-**Edit `.env` and update the following:**
+This creates the database with:
+- 2 contracts (ASSESS, RSES)
+- 11 departments (9 ASSESS + 2 RSES)
+- 6 test users (see [CREDENTIALS.md](CREDENTIALS.md))
+- Sample visa applications, case groups, and todos
+
+### 6. Start Backend Server
 
 ```bash
-# Generate a secure SECRET_KEY:
-openssl rand -hex 32
-
-# Update .env with generated key:
-SECRET_KEY=your-generated-key-here
-
-# Email configuration (optional for MVP):
-SMTP_USER=your-email@gmail.com
-SMTP_PASSWORD=your-app-password
+uvicorn app.main:app --reload --port 8000
 ```
 
-### 6. Initialize Database
+### 7. Verify Backend is Running
 
-```bash
-alembic upgrade head
-```
-
-This creates the SQLite database with all tables.
-
-### 7. Start Backend Server
-
-**Option A - Using the startup script:**
-```bash
-./start.sh
-```
-
-**Option B - Manual start:**
-```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 8. Verify Backend is Running
-
-Open your browser and visit:
-- **API Root:** http://localhost:8000
 - **API Docs (Swagger):** http://localhost:8000/docs
 - **ReDoc:** http://localhost:8000/redoc
+
+**Test Login:**
+- Use credentials from [CREDENTIALS.md](CREDENTIALS.md)
+- Default admin: `admin@ama-impact.com` / `Admin123!`
 
 ---
 
@@ -138,269 +117,79 @@ Open your browser and visit: http://localhost:3000
 
 ## 🧪 Testing the Application
 
-### Create Your First Admin User
+The fixture system creates test users automatically. See [CREDENTIALS.md](CREDENTIALS.md) for login details.
 
-Use the API documentation at http://localhost:8000/docs:
-
-1. Navigate to **POST /api/v1/auth/register**
-2. Click "Try it out"
-3. Enter the following JSON:
-
-```json
-{
-  "email": "admin@ama-impact.com",
-  "password": "SecurePassword123!",
-  "full_name": "System Administrator",
-  "role": "admin",
-  "phone": "+1-555-0100"
-}
-```
-
-4. Click "Execute"
-
-### Login and Get JWT Token
-
-1. Navigate to **POST /api/v1/auth/login**
-2. Enter credentials:
-   - **username:** `admin@ama-impact.com`
-   - **password:** `SecurePassword123!`
-3. Copy the `access_token` from the response
-4. Click the **Authorize** button at the top
-5. Enter: `Bearer <your-access-token>`
-6. Now you can test all protected endpoints!
+**Quick Test:**
+1. Go to http://localhost:8000/docs
+2. Click **Authorize**
+3. Login with admin credentials: `admin@ama-impact.com` / `Admin123!`
+4. Test any endpoint
 
 ---
 
-## 📊 Database Schema
+## 📊 Key Features in v2.0
 
-The database includes the following tables:
+- **Case Groups** - Organize related visa applications (e.g., H1B → Green Card pathway)
+- **Todo System** - Task tracking with computed metrics (overdue, completion time)
+- **Departments API** - Full CRUD for organizational structure
+- **Hierarchical Visibility** - Users see data based on role and organizational structure
+- **Role-Based User Creation** - Controlled permissions for creating new users
 
-- **users** - User accounts with roles and authentication
-- **contracts** - Company contracts (ASSESS, RESESS, etc.)
-- **visa_applications** - Visa/green card tracking records
-- **visa_types** - Visa type definitions (H-1B, L-1, etc.)
-- **audit_logs** - Complete audit trail
-- **notifications** - In-app notifications
-- **email_logs** - Email delivery tracking
-- **user_settings** - User preferences and alert thresholds
+**For complete feature list, see [README.md](README.md) or [PRD.md](PRD.md)**
 
 ---
 
 ## 🔐 User Roles
 
-| Role | Access Level | Permissions |
-|------|-------------|-------------|
-| **admin** | System-wide | Full access to all contracts, users, and settings |
-| **hr** | Multi-contract | View/edit assigned contracts, generate reports |
-| **program_manager** | Contract-wide | View/edit entire contract, receive critical alerts |
-| **tech_lead** | Team-level | View/edit direct and indirect reports |
-| **staff** | Self-only | View own visa status, receive personal alerts |
+| Role | Access Level | Can Create Users |
+|------|-------------|------------------|
+| **ADMIN** | System-wide | Any role |
+| **HR** | Multi-contract | BENEFICIARY only |
+| **PM** | Contract-wide | BENEFICIARY only |
+| **MANAGER** | Team-level | BENEFICIARY only |
+| **BENEFICIARY** | Self-only | Cannot create users |
 
----
-
-## 📝 Common Tasks
-
-### Create a New Contract
-
-**API Endpoint:** `POST /api/v1/contracts`
-
-```json
-{
-  "name": "ASSESS Program",
-  "code": "ASSESS-2025",
-  "start_date": "2025-01-01",
-  "status": "active"
-}
-```
-
-### Create a Visa Application
-
-**API Endpoint:** `POST /api/v1/visa-applications`
-
-```json
-{
-  "user_id": "<user_uuid>",
-  "visa_type_id": "<visa_type_uuid>",
-  "visa_type": "H1B",
-  "status": "in_progress",
-  "priority": "high",
-  "filing_date": "2025-01-15",
-  "expiration_date": "2028-01-15"
-}
-```
-
-### View Dashboard Data
-
-**API Endpoint:** `GET /api/v1/reports/dashboard`
-
-This returns role-filtered statistics for the current user.
+See [CREDENTIALS.md](CREDENTIALS.md) for test user accounts.
 
 ---
 
 ## 🐛 Troubleshooting
 
 ### Backend Won't Start
-
-**Error:** `ModuleNotFoundError: No module named 'app'`
-
-**Solution:** Make sure you're running from the `backend/` directory:
-```bash
-cd backend
-uvicorn app.main:app --reload
-```
+**Error:** `ModuleNotFoundError: No module named 'app'`  
+**Solution:** Ensure you're in the `backend/` directory and virtual environment is activated
 
 ### Database Error
-
-**Error:** `alembic.util.exc.CommandError: Target database is not up to date.`
-
-**Solution:** Run migrations:
-```bash
-cd backend
-alembic upgrade head
-```
-
-### Frontend Can't Connect to Backend
-
-**Error:** `fetch failed` or `CORS error`
-
-**Solution:**
-1. Verify backend is running at http://localhost:8000
-2. Check `.env.local` has correct API URL
-3. Ensure CORS is configured in `backend/app/core/config.py`
+**Solution:** Re-run setup script: `python scripts/setup_dev_environment.py`
 
 ### Virtual Environment Issues
+**Error:** `command not found: uvicorn`  
+**Solution:** Activate virtual environment: `source ../.venv/bin/activate`
 
-**Error:** `command not found: uvicorn`
-
-**Solution:** Activate the virtual environment:
-```bash
-source ../.venv/bin/activate  # Linux/Mac
-# or
-..\.venv\Scripts\activate  # Windows
-```
+**For more troubleshooting, see [Development Guide](docs/development/setup.md)**
 
 ---
 
-## 📚 Next Steps
+## 📚 Documentation
 
-1. **Read the PRD:** Review `PRD.md` for complete feature specifications
-2. **Explore API Docs:** http://localhost:8000/docs for all endpoints
-3. **Check Models:** Review `backend/app/models/` for data structures
-4. **Review Schemas:** See `backend/app/schemas/` for API contracts
-
----
-
-## 🔧 Development Workflow
-
-### Making Database Changes
-
-1. Update models in `backend/app/models/`
-2. Generate migration:
-   ```bash
-   alembic revision --autogenerate -m "Description of change"
-   ```
-3. Review migration in `backend/alembic/versions/`
-4. Apply migration:
-   ```bash
-   alembic upgrade head
-   ```
-
-### Adding a New API Endpoint
-
-1. Create/update router in `backend/app/api/v1/`
-2. Add Pydantic schemas in `backend/app/schemas/`
-3. Implement CRUD operations in `backend/app/crud/` (if needed)
-4. Register router in `backend/app/main.py`
-
-### Frontend Development
-
-1. Create components in `frontend/components/`
-2. Add pages in `frontend/app/`
-3. Use Tailwind CSS for styling
-4. Connect to API using `fetch` or `axios`
+- **[README.md](README.md)** - Project overview and features
+- **[PRD.md](PRD.md)** - Product requirements and specifications
+- **[CREDENTIALS.md](CREDENTIALS.md)** - Test user accounts
+- **[docs/](docs/)** - Complete documentation site
+  - [Quick Start](docs/getting-started/quickstart.md) - Detailed setup guide
+  - [Development Guide](docs/development/setup.md) - Development workflow
+  - [API Reference](docs/api/overview.md) - Complete API documentation
+  - [Data Models](docs/architecture/data-models.md) - Database schema
 
 ---
 
-## 📦 Project Structure
+## � Common Development Tasks
 
-```
-AMA-IMPACT/
-├── backend/                    # FastAPI application
-│   ├── app/
-│   │   ├── api/v1/            # API routes (auth, users, contracts, visas)
-│   │   ├── core/              # Config, database, security
-│   │   ├── models/            # SQLAlchemy models
-│   │   ├── schemas/           # Pydantic validation schemas
-│   │   ├── crud/              # Database operations (future)
-│   │   ├── services/          # Business logic (future)
-│   │   └── main.py            # FastAPI app initialization
-│   ├── alembic/               # Database migrations
-│   ├── requirements.txt       # Python dependencies
-│   ├── .env.example           # Environment template
-│   └── start.sh               # Startup script
-├── frontend/                  # Next.js application
-│   ├── app/                   # Next.js 14 App Router pages
-│   ├── components/            # React components (to be added)
-│   ├── lib/                   # Utilities and API client (to be added)
-│   ├── package.json           # Node dependencies
-│   └── .env.local             # Frontend environment variables
-├── PRD.md                     # Product Requirements Document
-├── README.md                  # Project overview
-├── GETTING_STARTED.md         # This file
-└── .gitignore                 # Git ignore rules
-```
-
----
-
-## 🚀 Production Deployment
-
-### Backend
-
-1. **Set production environment variables:**
-   ```bash
-   DEBUG=False
-   DATABASE_URL=sqlite:///./ama_impact.db  # or PostgreSQL for scale
-   ```
-
-2. **Run with Gunicorn:**
-   ```bash
-   gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
-   ```
-
-3. **Set up Nginx reverse proxy:**
-   ```nginx
-   location / {
-       proxy_pass http://localhost:8000;
-       proxy_set_header Host $host;
-       proxy_set_header X-Real-IP $remote_addr;
-   }
-   ```
-
-### Frontend
-
-1. **Build production bundle:**
-   ```bash
-   npm run build
-   ```
-
-2. **Start production server:**
-   ```bash
-   npm start
-   ```
-
-3. **Or deploy to Vercel:**
-   ```bash
-   vercel --prod
-   ```
-
----
-
-## 📧 Support
-
-For issues or questions:
-1. Check the **Troubleshooting** section above
-2. Review API documentation at http://localhost:8000/docs
-3. Create an issue in the GitHub repository
+**See [Development Guide](docs/development/setup.md) for:**
+- Adding database migrations
+- Creating new API endpoints
+- Running tests
+- Code standards and conventions
 
 ---
 
