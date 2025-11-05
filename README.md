@@ -99,6 +99,7 @@ AMA-IMPACT/
 ### Core Functionality
 - **Role-Based Access Control**: 5 user roles (ADMIN, HR, PM, MANAGER, BENEFICIARY)
 - **Hierarchical Visibility**: Users see data based on organizational structure
+- **Department Management**: Full CRUD for organizational units with tree hierarchy
 - **Visa Tracking**: H-1B, L-1, O-1, TN, EB-1A/B, EB-2, PERM, OPT, EAD, Green Card
 - **Case Groups**: Organize related visa applications (e.g., H1B → Green Card pathway)
 - **Beneficiary System**: Separation of users from foreign nationals

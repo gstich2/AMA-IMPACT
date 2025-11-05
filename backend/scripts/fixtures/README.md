@@ -54,7 +54,17 @@ python scripts/fixtures/contracts/seed_assess.py
 ```
 Creates:
 - ASSESS contract (NASA ARC, 2025-2030)
-- 5 departments: TS → TSM/TSA, TNA, AV
+- 9 departments matching NASA Ames organizational structure:
+  - Entry Systems and Technology Division (TS) with 4 branches:
+    - Thermal Protection Materials Branch (TSM)
+    - Aerothermodynamics Branch (TSA)
+    - Thermo-Physics Facilities Branch (TSF)
+    - Entry Systems and Vehicle Development Branch (TSS)
+  - NASA Advanced Supercomputing Division branches:
+    - Computational Aerosciences Branch (TNA)
+    - Advanced Computing Branch (TNC)
+    - Computational Physics Branch (TNP)
+  - Aeromechanics Office (AV)
 - PM: pm.assess@ama-impact.com (temp password: TempPassword123!)
 - Tech Lead: techlead.assess@ama-impact.com (temp password: TempPassword123!)
 
