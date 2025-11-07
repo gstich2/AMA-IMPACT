@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, String, Date, DateTime, Enum, Boolean, ForeignKey, Numeric, Text
+from sqlalchemy import Column, String, Date, DateTime, Enum, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
@@ -33,12 +33,6 @@ class Contract(Base):
     client_contact_name = Column(String(255), nullable=True)
     client_contact_email = Column(String(255), nullable=True)
     client_contact_phone = Column(String(50), nullable=True)
-    
-    # Billing information
-    billing_rate = Column(Numeric(10, 2), nullable=True)  # Rate per hour/unit
-    billing_frequency = Column(String(50), nullable=True)  # e.g., "Monthly", "Quarterly"
-    billing_contact_name = Column(String(255), nullable=True)
-    billing_contact_email = Column(String(255), nullable=True)
     
     # Additional details
     description = Column(Text, nullable=True)

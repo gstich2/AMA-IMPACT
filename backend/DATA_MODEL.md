@@ -361,15 +361,9 @@ Contract:
     
     # Client Information
     client_name: String - "NASA"
-    client_contact_name: String
+    client_contact_name: String - "Client POC"
     client_contact_email: String
     client_contact_phone: String
-    
-    # Billing
-    billing_rate: Decimal - Rate per hour/unit
-    billing_frequency: String - "Monthly", "Quarterly"
-    billing_contact_name: String
-    billing_contact_email: String
     
     # Additional
     description: Text

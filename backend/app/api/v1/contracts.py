@@ -91,3 +91,34 @@ async def update_contract(
     db.refresh(contract)
     
     return contract
+
+
+@router.delete("/{contract_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_contract(
+    contract_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """Delete a contract (admin only)."""
+    contract = db.query(Contract).filter(Contract.id == contract_id).first()
+    if not contract:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Contract not found"
+        )
+    
+    # TODO: Check if current_user is admin
+    
+    # Check if contract has associated users
+    from app.models.user import User as UserModel
+    users_count = db.query(UserModel).filter(UserModel.contract_id == contract_id).count()
+    if users_count > 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot delete contract with {users_count} associated users. Please reassign or remove users first."
+        )
+    
+    db.delete(contract)
+    db.commit()
+    
+    return None

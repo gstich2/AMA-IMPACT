@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import Optional
 from datetime import date, datetime
 from app.models.contract import ContractStatus
@@ -21,15 +21,17 @@ class ContractBase(BaseModel):
     client_contact_email: Optional[str] = Field(None, max_length=255)
     client_contact_phone: Optional[str] = Field(None, max_length=50)
     
-    # Billing information
-    billing_rate: Optional[float] = None
-    billing_frequency: Optional[str] = Field(None, max_length=50)
-    billing_contact_name: Optional[str] = Field(None, max_length=255)
-    billing_contact_email: Optional[str] = Field(None, max_length=255)
-    
     # Additional details
     description: Optional[str] = None
     notes: Optional[str] = None
+
+    @field_validator('client_name', 'client_contact_name', 'client_contact_email', 'client_contact_phone', 'description', 'notes', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """Convert empty strings to None for optional fields."""
+        if v == "":
+            return None
+        return v
 
 
 class ContractCreate(ContractBase):
@@ -54,15 +56,17 @@ class ContractUpdate(BaseModel):
     client_contact_email: Optional[str] = Field(None, max_length=255)
     client_contact_phone: Optional[str] = Field(None, max_length=50)
     
-    # Billing information
-    billing_rate: Optional[float] = None
-    billing_frequency: Optional[str] = Field(None, max_length=50)
-    billing_contact_name: Optional[str] = Field(None, max_length=255)
-    billing_contact_email: Optional[str] = Field(None, max_length=255)
-    
     # Additional details
     description: Optional[str] = None
     notes: Optional[str] = None
+
+    @field_validator('client_name', 'client_contact_name', 'client_contact_email', 'client_contact_phone', 'description', 'notes', mode='before')
+    @classmethod
+    def empty_str_to_none(cls, v):
+        """Convert empty strings to None for optional fields."""
+        if v == "":
+            return None
+        return v
 
 
 class Contract(ContractBase):

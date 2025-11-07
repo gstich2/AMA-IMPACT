@@ -90,6 +90,9 @@ yarn.lock
 out/
 dist/
 
+# Reference materials (never commit)
+reference-frontend/
+
 # Misc
 .cache/
 tmp/

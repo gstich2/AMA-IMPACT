@@ -33,6 +33,7 @@ from app.models.dependent import Dependent, RelationshipType
 from app.models.law_firm import LawFirm
 from app.models.visa import VisaType, VisaApplication, VisaTypeEnum, VisaStatus, VisaCaseStatus, VisaPriority
 from app.models.case_group import CaseGroup, CaseType, CaseStatus
+from app.models.audit import AuditLog, AuditAction
 
 
 def seed_development_data():
@@ -644,6 +645,28 @@ def seed_development_data():
         db.add(todo7)
         
         print(f"      ✓ Created 7 todos (1 urgent, 2 high, 2 medium priority)")
+
+        # ============================================================
+        # 7. CREATE SAMPLE AUDIT LOGS (if none exist)
+        # ============================================================
+        try:
+            existing_logs = db.query(AuditLog).count()
+        except Exception:
+            existing_logs = 0
+
+        if existing_logs == 0:
+            print("\n   Creating sample audit logs...")
+            now = datetime.utcnow()
+            sample_logs = [
+                AuditLog(user_id=pm_user.id, action=AuditAction.CREATE, resource_type='case_group', resource_id=str(priya_case.id), new_value={'case_number': priya_case.case_number}, created_at=now - timedelta(hours=2)),
+                AuditLog(user_id=hr_user.id, action=AuditAction.CREATE, resource_type='todo', resource_id=str(todo1.id), new_value={'title': todo1.title}, created_at=now - timedelta(hours=5)),
+                AuditLog(user_id=tech_lead.id, action=AuditAction.UPDATE, resource_type='department', resource_id=str(dept_ts.id), new_value={'manager_id': tech_lead.id}, created_at=now - timedelta(days=1)),
+                AuditLog(user_id=admin.id, action=AuditAction.SYSTEM, resource_type='seed', resource_id=None, new_value={'message': 'Development seed created'}, created_at=now - timedelta(days=1, hours=3)),
+            ]
+            for log in sample_logs:
+                db.add(log)
+            db.flush()
+            print("      ✓ Created sample audit logs")
         
         # ============================================================
         # COMMIT ALL

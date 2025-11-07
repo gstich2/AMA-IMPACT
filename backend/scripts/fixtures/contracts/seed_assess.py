@@ -52,11 +52,11 @@ def seed_assess():
         # 2. CREATE DEPARTMENTS
         # ============================================================
         
-        # Top-level department: Entry Systems and Technology Division (Code TS)
+        # Top-level department: Technology Systems (TS)
         dept_ts = Department(
-            name='Entry Systems and Technology Division',
+            name='Entry Systems and Technology',
             code='TS',
-            description='Entry Systems and Technology Division under Exploration Technology Directorate',
+            description='Technology Systems Division',
             contract_id=assess_contract.id,
             parent_id=None,
             level=1
@@ -64,89 +64,46 @@ def seed_assess():
         db.add(dept_ts)
         db.flush()
         
-        # Sub-departments under TS (Entry Systems branches)
+        # Sub-departments under TS
         dept_tsm = Department(
-            name='Thermal Protection Materials Branch',
+            name='Technology Systems Management',
             code='TSM',
-            description='Thermal Protection Materials Branch - develops and tests thermal protection systems',
+            description='Systems Management Team',
             contract_id=assess_contract.id,
             parent_id=dept_ts.id,
             level=2
         )
         dept_tsa = Department(
-            name='Aerothermodynamics Branch',
+            name='Technology Systems Administration',
             code='TSA',
-            description='Aerothermodynamics Branch - aerothermodynamic analysis and testing',
+            description='Systems Administration Team',
             contract_id=assess_contract.id,
             parent_id=dept_ts.id,
             level=2
         )
-        dept_tsf = Department(
-            name='Thermo-Physics Facilities Branch',
-            code='TSF',
-            description='Thermo-Physics Facilities Branch - operates thermal protection testing facilities',
-            contract_id=assess_contract.id,
-            parent_id=dept_ts.id,
-            level=2
-        )
-        dept_tss = Department(
-            name='Entry Systems and Vehicle Development Branch',
-            code='TSS',
-            description='Entry Systems and Vehicle Development Branch - entry vehicle design and development',
-            contract_id=assess_contract.id,
-            parent_id=dept_ts.id,
-            level=2
-        )
-        db.add_all([dept_tsm, dept_tsa, dept_tsf, dept_tss])
+        db.add_all([dept_tsm, dept_tsa])
         
-        # NASA Advanced Supercomputing (NAS) Division branches
+        # Flat departments (no parent)
         dept_tna = Department(
-            name='Computational Aerosciences Branch',
+            name='Technology Network Administration',
             code='TNA',
-            description='Computational Aerosciences Branch under NASA Advanced Supercomputing Division',
+            description='Network Administration Team',
             contract_id=assess_contract.id,
             parent_id=None,
             level=1
         )
-        dept_tnc = Department(
-            name='Advanced Computing Branch',
-            code='TNC',
-            description='Advanced Computing Branch - advanced computing systems and technologies',
-            contract_id=assess_contract.id,
-            parent_id=None,
-            level=1
-        )
-        dept_tnp = Department(
-            name='Computational Physics Branch',
-            code='TNP',
-            description='Computational Physics Branch - computational physics research and applications',
-            contract_id=assess_contract.id,
-            parent_id=None,
-            level=1
-        )
-        
-        # Aeromechanics Office
         dept_av = Department(
-            name='Aeromechanics Office',
+            name='Audio Visual',
             code='AV',
-            description='Aeromechanics Office under Aeronautics Directorate',
+            description='Audio Visual Support Team',
             contract_id=assess_contract.id,
             parent_id=None,
             level=1
         )
-        db.add_all([dept_tna, dept_tnc, dept_tnp, dept_av])
+        db.add_all([dept_tna, dept_av])
         db.flush()
         
-        print(f"   ✓ Created 9 departments:")
-        print(f"     - TS: Entry Systems and Technology Division")
-        print(f"       - TSM: Thermal Protection Materials Branch")
-        print(f"       - TSA: Aerothermodynamics Branch")
-        print(f"       - TSF: Thermo-Physics Facilities Branch")
-        print(f"       - TSS: Entry Systems and Vehicle Development Branch")
-        print(f"     - TNA: Computational Aerosciences Branch")
-        print(f"     - TNC: Advanced Computing Branch")
-        print(f"     - TNP: Computational Physics Branch")
-        print(f"     - AV: Aeromechanics Office")
+        print(f"   ✓ Created 5 departments (TS→TSM/TSA, TNA, AV)")
         
         # ============================================================
         # 3. CREATE PROGRAM MANAGER (PRODUCTION USER)
@@ -156,12 +113,12 @@ def seed_assess():
         pm_user = User(
             email='pm.assess@ama-impact.com',
             hashed_password=get_password_hash('TempPassword123!'),
-            full_name='John Smith',
+            full_name='Dave Cornelius',
             role=UserRole.PM,
             contract_id=assess_contract.id,
             department_id=None,  # Contract level
             is_active=True,
-            force_password_change=True  # ⭐ PRODUCTION: Must change password
+            force_password_change=False  # ⭐ PRODUCTION: Must change password
         )
         db.add(pm_user)
         db.flush()
@@ -202,10 +159,7 @@ def seed_assess():
         
         print(f"\n✅ ASSESS contract seeded successfully!")
         print(f"   Contract: {assess_contract.code}")
-        print(f"   Departments: 9")
-        print(f"     - Entry Systems and Technology Division (TS) with 4 branches (TSM/TSA/TSF/TSS)")
-        print(f"     - NASA Advanced Supercomputing branches (TNA/TNC/TNP)")
-        print(f"     - Aeromechanics Office (AV)")
+        print(f"   Departments: 5 (TS→TSM/TSA, TNA, AV)")
         print(f"   Users: 2 (PM, Manager)")
         print(f"   ⚠️  Temp Password: TempPassword123! (must be changed on first login)")
         
