@@ -70,9 +70,32 @@ const mockUsers = [
    // Use actual API responses, never hardcoded data
    ```
 
+**Display Labels vs Data:**
+- ✅ OK: Label/badge mappings for display (e.g., status colors, priority labels)
+- ❌ NOT OK: Arrays of objects with sample names, dates, details
+
 ---
 
-## 3. NASA Ames Organizational Structure - NEVER SIMPLIFY
+## 3. UI Components - Common Issues
+
+### ⚠️ RECURRING: Dropdown Transparency Problem
+
+**Problem:** Select dropdowns render with transparent background, making text unreadable.
+
+**Solution:** ALWAYS add `bg-white` or `bg-background` class to SelectTrigger:
+```typescript
+<SelectTrigger className="bg-white">  // ← REQUIRED!
+  <SelectValue placeholder="..." />
+</SelectTrigger>
+```
+
+**Check before committing:**
+- [ ] All `<SelectTrigger>` components have background class
+- [ ] Dropdowns are readable in both light and dark themes
+
+---
+
+## 4. NASA Ames Organizational Structure - NEVER SIMPLIFY
 
 ### ⚠️ CRITICAL: This is the COMPLETE structure. DO NOT MODIFY.
 

@@ -36,7 +36,9 @@ import {
   X,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Edit,
+  AlertTriangle
 } from 'lucide-react'
 
 interface CaseGroup {
@@ -52,6 +54,10 @@ interface CaseGroup {
     last_name: string
     user?: {
       email: string
+      department?: {
+        code: string
+        name: string
+      }
     }
   }
   responsible_party?: {
@@ -66,7 +72,7 @@ interface CaseGroup {
   attorney_portal_link?: string
 }
 
-type SortableColumn = 'case_number' | 'beneficiary' | 'case_type' | 'status' | 'approval_status' | 'priority' | 'case_started_date' | 'target_completion_date'
+type SortableColumn = 'case_number' | 'beneficiary' | 'case_type' | 'status' | 'approval_status' | 'priority' | 'case_started_date' | 'target_completion_date' | 'department'
 
 export default function CasesPage() {
   const router = useRouter()
@@ -99,6 +105,7 @@ export default function CasesPage() {
       
       // Get case groups
       const casesResponse = await caseGroupsAPI.getAll()
+      console.log('Cases loaded:', casesResponse) // Debug log
       setCaseGroups(casesResponse)
     } catch (error) {
       console.error('Error loading cases:', error)
@@ -181,6 +188,10 @@ export default function CasesPage() {
         aValue = a.priority || ''
         bValue = b.priority || ''
         break
+      case 'department':
+        aValue = a.beneficiary?.user?.department?.code || ''
+        bValue = b.beneficiary?.user?.department?.code || ''
+        break
       case 'case_started_date':
         aValue = a.case_started_date ? new Date(a.case_started_date).getTime() : 0
         bValue = b.case_started_date ? new Date(b.case_started_date).getTime() : 0
@@ -223,15 +234,21 @@ export default function CasesPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { variant: any; label: string }> = {
-      PLANNING: { variant: 'secondary', label: 'Planning' },
-      IN_PROGRESS: { variant: 'default', label: 'In Progress' },
-      COMPLETED: { variant: 'success', label: 'Completed' },
-      ON_HOLD: { variant: 'warning', label: 'On Hold' },
-      CANCELLED: { variant: 'destructive', label: 'Cancelled' },
+    const statusConfig: Record<string, { icon?: any; variant: any; label: string }> = {
+      PLANNING: { icon: FileText, variant: 'secondary', label: 'Planning' },
+      IN_PROGRESS: { icon: Clock, variant: 'default', label: 'In Progress' },
+      COMPLETED: { icon: CheckCircle, variant: 'success', label: 'Completed' },
+      ON_HOLD: { icon: AlertTriangle, variant: 'warning', label: 'On Hold' },
+      CANCELLED: { icon: XCircle, variant: 'destructive', label: 'Cancelled' },
     }
     const config = statusConfig[status] || { variant: 'secondary', label: status }
-    return <Badge variant={config.variant as any}>{config.label}</Badge>
+    const Icon = config.icon
+    return (
+      <Badge variant={config.variant as any} className="flex items-center gap-1">
+        {Icon && <Icon className="h-3 w-3" />}
+        {config.label}
+      </Badge>
+    )
   }
 
   const getApprovalStatusBadge = (approvalStatus: string) => {
@@ -260,7 +277,29 @@ export default function CasesPage() {
       LOW: { variant: 'secondary', label: 'Low' },
     }
     const config = priorityConfig[priority] || { variant: 'secondary', label: priority }
-    return <Badge variant={config.variant as any}>{config.label}</Badge>
+    return <Badge variant="outline" className={getPriorityColorClass(priority)}>{config.label}</Badge>
+  }
+
+  const getPriorityColorClass = (priority: string) => {
+    const colorMap: Record<string, string> = {
+      CRITICAL: 'border-red-500 text-red-700 bg-red-50',
+      URGENT: 'border-orange-500 text-orange-700 bg-orange-50',
+      HIGH: 'border-yellow-500 text-yellow-700 bg-yellow-50',
+      MEDIUM: 'border-blue-500 text-blue-700 bg-blue-50',
+      LOW: 'border-gray-400 text-gray-600 bg-gray-50',
+    }
+    return colorMap[priority] || ''
+  }
+
+  const getRowColorClass = (priority: string) => {
+    const colorMap: Record<string, string> = {
+      CRITICAL: 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500',
+      URGENT: 'bg-orange-50 hover:bg-orange-100 border-l-4 border-l-orange-500',
+      HIGH: 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-l-yellow-400',
+      MEDIUM: 'hover:bg-muted/50',
+      LOW: 'hover:bg-muted/50',
+    }
+    return colorMap[priority] || 'hover:bg-muted/50'
   }
 
   const getCaseTypeLabel = (caseType: string) => {
@@ -303,6 +342,10 @@ export default function CasesPage() {
   }
 
   const canCreateCase = () => {
+    return currentUser?.role === 'MANAGER' || currentUser?.role === 'PM' || currentUser?.role === 'HR'
+  }
+
+  const canEditCase = () => {
     return currentUser?.role === 'MANAGER' || currentUser?.role === 'PM' || currentUser?.role === 'HR'
   }
 
@@ -363,7 +406,7 @@ export default function CasesPage() {
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Add Status Filter" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="PLANNING">Planning</SelectItem>
                   <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                   <SelectItem value="COMPLETED">Completed</SelectItem>
@@ -377,7 +420,7 @@ export default function CasesPage() {
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Add Case Type Filter" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="H1B">H1B</SelectItem>
                   <SelectItem value="H1B_TRANSFER">H1B Transfer</SelectItem>
                   <SelectItem value="EB1">EB-1</SelectItem>
@@ -395,7 +438,7 @@ export default function CasesPage() {
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Add Approval Filter" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="DRAFT">Draft</SelectItem>
                   <SelectItem value="PENDING_PM_APPROVAL">Pending Approval</SelectItem>
                   <SelectItem value="PM_APPROVED">Approved</SelectItem>
@@ -408,7 +451,7 @@ export default function CasesPage() {
                 <SelectTrigger className="bg-white">
                   <SelectValue placeholder="Add Priority Filter" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white">
                   <SelectItem value="CRITICAL">Critical</SelectItem>
                   <SelectItem value="URGENT">Urgent</SelectItem>
                   <SelectItem value="HIGH">High</SelectItem>
@@ -428,7 +471,7 @@ export default function CasesPage() {
                     size="sm"
                     onClick={() => toggleFilter(selectedStatuses, status, setSelectedStatuses)}
                   >
-                    Status: {getStatusBadge(status).props.children}
+                    Status: {getStatusBadge(status).props.children[1]}
                     <X className="h-3 w-3 ml-2" />
                   </Button>
                 ))}
@@ -450,7 +493,7 @@ export default function CasesPage() {
                     size="sm"
                     onClick={() => toggleFilter(selectedApprovalStatuses, status, setSelectedApprovalStatuses)}
                   >
-                    Approval: {getApprovalStatusBadge(status).props.children}
+                    Approval: {getApprovalStatusBadge(status).props.children[1]}
                     <X className="h-3 w-3 ml-2" />
                   </Button>
                 ))}
@@ -509,16 +552,16 @@ export default function CasesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('case_number')}>
-                        <div className="flex items-center">
-                          Case Number
-                          {getSortIcon('case_number')}
-                        </div>
-                      </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('beneficiary')}>
                         <div className="flex items-center">
                           Employee
                           {getSortIcon('beneficiary')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('department')}>
+                        <div className="flex items-center">
+                          Department
+                          {getSortIcon('department')}
                         </div>
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('case_type')}>
@@ -533,31 +576,20 @@ export default function CasesPage() {
                           {getSortIcon('status')}
                         </div>
                       </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('approval_status')}>
-                        <div className="flex items-center">
-                          Approval
-                          {getSortIcon('approval_status')}
-                        </div>
-                      </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('priority')}>
                         <div className="flex items-center">
                           Priority
                           {getSortIcon('priority')}
                         </div>
                       </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('case_started_date')}>
-                        <div className="flex items-center">
-                          Started
-                          {getSortIcon('case_started_date')}
-                        </div>
-                      </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('target_completion_date')}>
                         <div className="flex items-center">
-                          Target Date
+                          Next Deadline
                           {getSortIcon('target_completion_date')}
                         </div>
                       </TableHead>
-                      <TableHead>Manager</TableHead>
+                      <TableHead>Assigned To</TableHead>
+                      <TableHead>Law Firm</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -565,20 +597,17 @@ export default function CasesPage() {
                     {sortedCaseGroups.map((caseGroup) => (
                       <TableRow 
                         key={caseGroup.id}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className={`cursor-pointer ${getRowColorClass(caseGroup.priority)}`}
                         onClick={() => router.push(`/cases/${caseGroup.id}`)}
                       >
-                        <TableCell className="font-medium">
-                          {caseGroup.case_number}
-                        </TableCell>
                         <TableCell>
                           {caseGroup.beneficiary ? (
                             <div>
                               <div className="font-medium">
                                 {caseGroup.beneficiary.first_name} {caseGroup.beneficiary.last_name}
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                {caseGroup.beneficiary.user?.email}
+                              <div className="text-xs text-muted-foreground">
+                                {caseGroup.case_number}
                               </div>
                             </div>
                           ) : (
@@ -586,16 +615,17 @@ export default function CasesPage() {
                           )}
                         </TableCell>
                         <TableCell>
+                          <Badge variant="outline" className="font-mono">
+                            {caseGroup.beneficiary?.user?.department?.code || 'N/A'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
                           <Badge variant="outline">
                             {getCaseTypeLabel(caseGroup.case_type)}
                           </Badge>
                         </TableCell>
                         <TableCell>{getStatusBadge(caseGroup.status)}</TableCell>
-                        <TableCell>{getApprovalStatusBadge(caseGroup.approval_status)}</TableCell>
                         <TableCell>{getPriorityBadge(caseGroup.priority)}</TableCell>
-                        <TableCell className="text-sm">
-                          {formatDate(caseGroup.case_started_date)}
-                        </TableCell>
                         <TableCell className="text-sm">
                           {formatDate(caseGroup.target_completion_date)}
                         </TableCell>
@@ -604,18 +634,34 @@ export default function CasesPage() {
                            caseGroup.responsible_party?.full_name || 
                            <span className="text-muted-foreground">N/A</span>}
                         </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          N/A
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(`/cases/${caseGroup.id}`)
-                            }}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View
-                          </Button>
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/cases/${caseGroup.id}`)
+                              }}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            {canEditCase() && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/cases/${caseGroup.id}`)
+                                }}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
