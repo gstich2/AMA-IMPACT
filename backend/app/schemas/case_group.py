@@ -43,7 +43,7 @@ class CaseGroupUpdate(BaseModel):
 
 class CaseGroupResponse(CaseGroupBase):
     """Schema for CaseGroup response."""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
     
     id: str
     beneficiary_id: str
@@ -59,7 +59,7 @@ class CaseGroupResponse(CaseGroupBase):
 
 class CaseGroupWithApplications(CaseGroupResponse):
     """Schema for CaseGroup with related visa applications."""
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
     
     applications: List[Any] = []  # List of VisaApplication objects
 
