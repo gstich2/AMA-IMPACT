@@ -1,0 +1,15 @@
+Dept     Name                                          Manager                  Parent     
+-------  --------------------------------------------  -----------------------  -----------
+L1: A    Aeronautics Directorate                       (no manager)             (top level)
+L1: TN   NASA Advanced Supercomputing Division         (no manager)             (top level)
+L1: TS   Entry Systems and Technology Division         David Chen               (top level)
+L1: Y    Aeroflightdynamics Directorate                (no manager)             (top level)
+L2: AA   Systems Analysis Office                       Blake Hannah             A          
+L2: AV   Aeromechanics Office                          Gerrit-Daniel Stich      A          
+L2: TNA  Computational Aerosciences Branch             Gerrit-Daniel Stich      TN         
+L2: TNP  Computational Physics Branch                  Patricia Ventura Diaz    TN         
+L2: TSA  Aerothermodynamics Branch                     Bhaskaran Rathakrishnan  TS         
+L2: TSF  Thermo-Physics Facilities Branch              (no manager)             TS         
+L2: TSM  Thermal Protection Materials Branch           Arnaud Borner            TS         
+L2: TSS  Entry Systems and Vehicle Development Branch  Blake Hannah             TS         
+L2: YA   Computational Aeromechanics Tech Area         Shirzad Hoseinverdy      Y          

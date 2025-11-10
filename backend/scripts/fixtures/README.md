@@ -61,7 +61,7 @@ Creates:
     - L2: TSM (Thermal Protection Materials Branch) - Arnaud Borner
     - L2: TSA (Aerothermodynamics Branch) - Bhaskaran Rathakrishnan
     - L2: TSF (Thermo-Physics Facilities Branch) - No manager
-    - L2: TSS (Entry Systems and Vehicle Development Branch) - Blake Lively
+    - L2: TSS (Entry Systems and Vehicle Development Branch) - Blake Hannah
   
   **L1: NASA Advanced Supercomputing Division (TN)** - Parent department
     - L2: TNA (Computational Aerosciences Branch) - Gerrit-Daniel Stich
@@ -69,7 +69,7 @@ Creates:
   
   **L1: Aeronautics Directorate (A)** - Parent department
     - L2: AV (Aeromechanics Office) - Gerrit-Daniel Stich (dual role)
-    - L2: AA (Systems Analysis Office) - Blake Lively (dual role)
+    - L2: AA (Systems Analysis Office) - Blake Hannah (dual role)
   
   **L1: Aeroflightdynamics Directorate (Y)** - US Army, Parent department
     - L2: YA (Computational Aeromechanics Tech Area) - Shirzad Hoseinverdy
@@ -80,14 +80,14 @@ Creates:
   - **6 Department Managers:**
     - bhaskaran.rathakrishnan@ama-inc.com (TSA)
     - arnaud.borner@ama-inc.com (TSM)
-    - blake.lively@ama-inc.com (TSS, AA - dual role)
+    - blake.Hannah@ama-inc.com (TSS, AA - dual role)
     - patricia.ventura@ama-inc.com (TNP)
     - gerrit-daniel.stich@ama-inc.com (TNA, AV - dual role)
     - shirzad.hoseinverdy@ama-inc.com (YA - Army)
 
 - All passwords: `TempPassword123!` with `force_password_change=True`
 
-**Note:** Blake Lively and Gerrit-Daniel Stich each manage two departments (dual roles).
+**Note:** Blake Hannah and Gerrit-Daniel Stich each manage two departments (dual roles).
 
 ### RSES Contract
 ```bash

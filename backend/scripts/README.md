@@ -125,13 +125,13 @@ Loads comprehensive ASSESS contract data with real employee visa cases (developm
     - TSM (Thermal Protection Materials Branch) - Arnaud Borner
     - TSA (Aerothermodynamics Branch) - Bhaskaran Rathakrishnan
     - TSF (Thermo-Physics Facilities Branch) - No manager
-    - TSS (Entry Systems and Vehicle Development Branch) - Blake Lively
+    - TSS (Entry Systems and Vehicle Development Branch) - Blake Hannah
   - **TN (NASA Advanced Supercomputing Division)** - Parent department
     - TNA (Computational Aerosciences Branch) - Gerrit-Daniel Stich
     - TNP (Computational Physics Branch) - Patricia Ventura Diaz
   - **A (Aeronautics Directorate)** - Parent department
     - AV (Aeromechanics Office) - Gerrit-Daniel Stich (dual role)
-    - AA (Systems Analysis Office) - Blake Lively (dual role)
+    - AA (Systems Analysis Office) - Blake Hannah (dual role)
   - **Y (Aeroflightdynamics Directorate - US Army)** - Parent department
     - YA (Computational Aeromechanics Tech Area) - Shirzad Hoseinverdy
 - Creates 11 employees including PM and 6 Tech Leads
@@ -145,7 +145,7 @@ Loads comprehensive ASSESS contract data with real employee visa cases (developm
 - `techlead.assess@ama-impact.com` - TS Division Manager (David Chen)
 - `bhaskaran.rathakrishnan@ama-inc.com` - TSA Manager
 - `arnaud.borner@ama-inc.com` - TSM Manager
-- `blake.lively@ama-inc.com` - TSS & AA Manager (dual role)
+- `blake.Hannah@ama-inc.com` - TSS & AA Manager (dual role)
 - `patricia.ventura@ama-inc.com` - TNP Manager
 - `gerrit-daniel.stich@ama-inc.com` - TNA & AV Manager (dual role)
 - `shirzad.hoseinverdy@ama-inc.com` - YA Manager (Army)
