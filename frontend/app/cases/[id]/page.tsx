@@ -56,26 +56,67 @@ interface CaseGroup {
     id: string
     first_name: string
     last_name: string
+    job_title?: string
+    country_of_citizenship?: string
+    current_visa_type?: string
+    current_visa_expiration?: string
+    employment_start_date?: string
+    i94_expiration?: string
     user?: {
       email: string
+      full_name?: string
+      role?: string
+      department?: {
+        id: string
+        code: string
+        name: string
+      }
+      reports_to?: {
+        id: string
+        full_name: string
+        email: string
+      }
     }
-    country_of_citizenship?: string
-    job_title?: string
   }
   responsible_party?: {
     id: string
     full_name: string
     email: string
+    role?: string
+    department?: {
+      id: string
+      code: string
+      name: string
+    }
   }
   created_by_manager?: {
     id: string
     full_name: string
     email: string
+    role?: string
+    department?: {
+      id: string
+      code: string
+      name: string
+    }
   }
   approved_by_pm?: {
     id: string
     full_name: string
     email: string
+    role?: string
+    department?: {
+      id: string
+      code: string
+      name: string
+    }
+  }
+  law_firm?: {
+    id: string
+    name: string
+    contact_person?: string
+    email?: string
+    phone?: string
   }
   case_started_date?: string
   target_completion_date?: string
@@ -88,6 +129,7 @@ interface CaseGroup {
   todos?: any[]
   created_at?: string
   updated_at?: string
+  days_since_initiated?: number
 }
 
 export default function CaseDetailPage() {
@@ -98,6 +140,8 @@ export default function CaseDetailPage() {
   const [caseGroup, setCaseGroup] = useState<CaseGroup | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [timeline, setTimeline] = useState<any>(null)
+  const [timelineLoading, setTimelineLoading] = useState(false)
   
   // Dialog states
   const [showApprovalDialog, setShowApprovalDialog] = useState(false)
@@ -126,10 +170,25 @@ export default function CaseDetailPage() {
       // Get case group details
       const caseResponse = await caseGroupsAPI.getById(caseId)
       setCaseGroup(caseResponse)
+      
+      // Load timeline
+      loadTimeline()
     } catch (error) {
       console.error('Error loading case details:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadTimeline = async () => {
+    try {
+      setTimelineLoading(true)
+      const timelineResponse = await caseGroupsAPI.getTimeline(caseId)
+      setTimeline(timelineResponse)
+    } catch (error) {
+      console.error('Error loading timeline:', error)
+    } finally {
+      setTimelineLoading(false)
     }
   }
 
@@ -377,9 +436,31 @@ export default function CaseDetailPage() {
             <div className="w-12 h-12 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center">
               <FolderOpen className="h-6 w-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{caseGroup.case_number}</h1>
-              <p className="text-gray-600">{getCaseTypeLabel(caseGroup.case_type)} Case</p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-3xl font-bold text-gray-900">{caseGroup.case_number}</h1>
+                {getApprovalStatusBadge(caseGroup.approval_status)}
+                {getStatusBadge(caseGroup.status)}
+                {getPriorityBadge(caseGroup.priority)}
+              </div>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <span className="font-medium">{getCaseTypeLabel(caseGroup.case_type)}</span>
+                {caseGroup.beneficiary && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span>{caseGroup.beneficiary.first_name} {caseGroup.beneficiary.last_name}</span>
+                  </>
+                )}
+                {(caseGroup as any).days_since_initiated && (
+                  <>
+                    <span className="text-gray-400">•</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {(caseGroup as any).days_since_initiated} days since initiated
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -396,7 +477,7 @@ export default function CaseDetailPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Case Status</CardTitle>
+              <CardTitle>Case Overview</CardTitle>
               <div className="flex items-center gap-2">
                 {canSubmitForApproval() && (
                   <Button onClick={handleSubmitForApproval} disabled={submitting}>
@@ -427,22 +508,23 @@ export default function CaseDetailPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Key Dates */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pb-4 border-b">
               <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Case Status</div>
-                {getStatusBadge(caseGroup.status)}
+                <div className="text-sm font-medium text-muted-foreground mb-1">Started</div>
+                <div className="text-sm">{formatDate(caseGroup.case_started_date)}</div>
               </div>
               <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Approval Status</div>
-                {getApprovalStatusBadge(caseGroup.approval_status)}
+                <div className="text-sm font-medium text-muted-foreground mb-1">Target Completion</div>
+                <div className="text-sm">{formatDate(caseGroup.target_completion_date)}</div>
               </div>
               <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Priority</div>
-                {getPriorityBadge(caseGroup.priority)}
+                <div className="text-sm font-medium text-muted-foreground mb-1">Created</div>
+                <div className="text-sm">{formatDate(caseGroup.created_at)}</div>
               </div>
               <div>
-                <div className="text-sm font-medium text-muted-foreground mb-1">Case Type</div>
-                <Badge variant="outline">{getCaseTypeLabel(caseGroup.case_type)}</Badge>
+                <div className="text-sm font-medium text-muted-foreground mb-1">Last Updated</div>
+                <div className="text-sm">{formatDate(caseGroup.updated_at)}</div>
               </div>
             </div>
 
@@ -492,18 +574,58 @@ export default function CaseDetailPage() {
                       {caseGroup.beneficiary.first_name} {caseGroup.beneficiary.last_name}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground">Email</div>
-                    <div>{caseGroup.beneficiary.user?.email || 'N/A'}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Job Title</div>
+                      <div className="text-sm">{caseGroup.beneficiary.job_title || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Citizenship</div>
+                      <div className="text-sm">{caseGroup.beneficiary.country_of_citizenship || 'N/A'}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground">Job Title</div>
-                    <div>{caseGroup.beneficiary.job_title || 'N/A'}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Current Visa</div>
+                      <div className="text-sm">{caseGroup.beneficiary.current_visa_type || 'N/A'}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Visa Expiration</div>
+                      <div className="text-sm">{formatDate(caseGroup.beneficiary.current_visa_expiration)}</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-muted-foreground">Citizenship</div>
-                    <div>{caseGroup.beneficiary.country_of_citizenship || 'N/A'}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">Employment Start</div>
+                      <div className="text-sm">{formatDate(caseGroup.beneficiary.employment_start_date)}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-muted-foreground">I-94 Expiration</div>
+                      <div className="text-sm">{formatDate(caseGroup.beneficiary.i94_expiration)}</div>
+                    </div>
                   </div>
+                  {caseGroup.beneficiary.user && (
+                    <>
+                      <div className="pt-2 border-t">
+                        <div className="text-sm font-medium text-muted-foreground mb-1">Contact</div>
+                        <div className="text-sm">{caseGroup.beneficiary.user.email}</div>
+                      </div>
+                      {caseGroup.beneficiary.user.department && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">Department</div>
+                          <div className="text-sm">{caseGroup.beneficiary.user.department.name} ({caseGroup.beneficiary.user.department.code})</div>
+                        </div>
+                      )}
+                      {caseGroup.beneficiary.user.reports_to && (
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground">Reports To</div>
+                          <div className="text-sm font-medium text-blue-600 cursor-pointer hover:underline">
+                            {caseGroup.beneficiary.user.reports_to.full_name}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </>
               ) : (
                 <div className="text-muted-foreground">No beneficiary assigned</div>
@@ -511,12 +633,12 @@ export default function CaseDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Timeline */}
+          {/* Key Dates */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Timeline
+                Key Dates
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -546,45 +668,217 @@ export default function CaseDetailPage() {
           </Card>
         </div>
 
-        {/* Team Members */}
+        {/* Case Team */}
         <Card>
           <CardHeader>
-            <CardTitle>Team Members</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Case Team
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground mb-2">Responsible Party</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* HR Responsible Party */}
+              <div className="border rounded-lg p-4">
+                <div className="text-sm font-medium text-muted-foreground mb-2">HR Responsible Party</div>
                 {caseGroup.responsible_party ? (
-                  <div>
+                  <div className="space-y-1">
                     <div className="font-semibold">{caseGroup.responsible_party.full_name}</div>
-                    <div className="text-sm text-muted-foreground">{caseGroup.responsible_party.email}</div>
+                    {caseGroup.responsible_party.role && (
+                      <Badge variant="secondary" className="text-xs">{caseGroup.responsible_party.role}</Badge>
+                    )}
+                    {caseGroup.responsible_party.department && (
+                      <div className="text-xs text-muted-foreground">{caseGroup.responsible_party.department.name}</div>
+                    )}
+                    <div className="text-xs text-blue-600">{caseGroup.responsible_party.email}</div>
                   </div>
                 ) : (
-                  <div className="text-muted-foreground">Not assigned</div>
+                  <div className="text-sm text-muted-foreground">Not assigned</div>
                 )}
               </div>
-              <div>
+
+              {/* Law Firm */}
+              <div className="border rounded-lg p-4">
+                <div className="text-sm font-medium text-muted-foreground mb-2">Law Firm</div>
+                {caseGroup.law_firm ? (
+                  <div className="space-y-1">
+                    <div className="font-semibold">{caseGroup.law_firm.name}</div>
+                    {caseGroup.law_firm.contact_person && (
+                      <div className="text-xs text-muted-foreground">Contact: {caseGroup.law_firm.contact_person}</div>
+                    )}
+                    {caseGroup.law_firm.email && (
+                      <div className="text-xs text-blue-600">{caseGroup.law_firm.email}</div>
+                    )}
+                    {caseGroup.law_firm.phone && (
+                      <div className="text-xs text-muted-foreground">{caseGroup.law_firm.phone}</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Not assigned</div>
+                )}
+              </div>
+
+              {/* PM Approver */}
+              <div className="border rounded-lg p-4">
+                <div className="text-sm font-medium text-muted-foreground mb-2">PM Approver</div>
+                {caseGroup.approved_by_pm ? (
+                  <div className="space-y-1">
+                    <div className="font-semibold">{caseGroup.approved_by_pm.full_name}</div>
+                    {caseGroup.approved_by_pm.department && (
+                      <div className="text-xs text-muted-foreground">{caseGroup.approved_by_pm.department.name}</div>
+                    )}
+                    {caseGroup.pm_approval_date && (
+                      <div className="text-xs text-muted-foreground">{formatDate(caseGroup.pm_approval_date)}</div>
+                    )}
+                    <div className="text-xs text-blue-600">{caseGroup.approved_by_pm.email}</div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Not yet approved</div>
+                )}
+              </div>
+
+              {/* Created By Manager */}
+              <div className="border rounded-lg p-4">
                 <div className="text-sm font-medium text-muted-foreground mb-2">Created By</div>
                 {caseGroup.created_by_manager ? (
-                  <div>
+                  <div className="space-y-1">
                     <div className="font-semibold">{caseGroup.created_by_manager.full_name}</div>
-                    <div className="text-sm text-muted-foreground">{caseGroup.created_by_manager.email}</div>
+                    {caseGroup.created_by_manager.role && (
+                      <Badge variant="outline" className="text-xs">{caseGroup.created_by_manager.role}</Badge>
+                    )}
+                    {caseGroup.created_by_manager.department && (
+                      <div className="text-xs text-muted-foreground">{caseGroup.created_by_manager.department.name}</div>
+                    )}
+                    <div className="text-xs text-blue-600">{caseGroup.created_by_manager.email}</div>
                   </div>
                 ) : (
-                  <div className="text-muted-foreground">N/A</div>
+                  <div className="text-sm text-muted-foreground">N/A</div>
                 )}
               </div>
-              {caseGroup.approved_by_pm && (
-                <div>
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Approved By</div>
-                  <div>
-                    <div className="font-semibold">{caseGroup.approved_by_pm.full_name}</div>
-                    <div className="text-sm text-muted-foreground">{caseGroup.approved_by_pm.email}</div>
-                  </div>
-                </div>
-              )}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Timeline Activity */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Activity Timeline
+            </CardTitle>
+            <CardDescription>
+              Complete history of case events, milestones, and actions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {timelineLoading ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                Loading timeline...
+              </div>
+            ) : timeline && timeline.events && timeline.events.length > 0 ? (
+              <div className="space-y-4">
+                {timeline.events.map((event: any, index: number) => {
+                  const getEventIcon = () => {
+                    switch (event.event_type) {
+                      case 'case_created':
+                        return <Plus className="h-4 w-4 text-blue-600" />
+                      case 'submitted_for_approval':
+                      case 'case_submitted':
+                        return <Send className="h-4 w-4 text-yellow-600" />
+                      case 'approved':
+                      case 'case_approved':
+                        return <CheckCircle className="h-4 w-4 text-green-600" />
+                      case 'rejected':
+                      case 'case_rejected':
+                        return <XCircle className="h-4 w-4 text-red-600" />
+                      case 'milestone':
+                        return <Calendar className="h-4 w-4 text-purple-600" />
+                      case 'todo_completed':
+                        return <CheckCircle className="h-4 w-4 text-emerald-600" />
+                      case 'status_changed':
+                        return <Clock className="h-4 w-4 text-orange-600" />
+                      default:
+                        return <FileText className="h-4 w-4 text-gray-600" />
+                    }
+                  }
+
+                  const getEventColor = () => {
+                    switch (event.event_type) {
+                      case 'approved':
+                      case 'case_approved':
+                        return 'border-l-green-500 bg-green-50'
+                      case 'rejected':
+                      case 'case_rejected':
+                        return 'border-l-red-500 bg-red-50'
+                      case 'submitted_for_approval':
+                      case 'case_submitted':
+                        return 'border-l-yellow-500 bg-yellow-50'
+                      case 'milestone':
+                        return 'border-l-purple-500 bg-purple-50'
+                      case 'todo_completed':
+                        return 'border-l-emerald-500 bg-emerald-50'
+                      default:
+                        return 'border-l-gray-300 bg-gray-50'
+                    }
+                  }
+
+                  return (
+                    <div 
+                      key={event.id || index} 
+                      className={`border-l-4 ${getEventColor()} p-4 rounded-r-lg relative`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5">
+                          {getEventIcon()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <div className="font-semibold text-sm">{event.title}</div>
+                            <div className="text-xs text-muted-foreground whitespace-nowrap">
+                              {formatDateTime(event.timestamp)}
+                            </div>
+                          </div>
+                          {event.user_name && (
+                            <div className="text-xs text-muted-foreground mb-1">
+                              by {event.user_name}
+                            </div>
+                          )}
+                          {event.description && (
+                            <div className="text-sm text-gray-700 mt-1">
+                              {event.description}
+                            </div>
+                          )}
+                          {event.milestone_type && (
+                            <Badge variant="secondary" className="text-xs mt-2">
+                              {event.milestone_type.replace(/_/g, ' ')}
+                            </Badge>
+                          )}
+                          {event.new_values && Object.keys(event.new_values).length > 0 && (
+                            <details className="mt-2 text-xs">
+                              <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
+                                View changes
+                              </summary>
+                              <div className="mt-1 p-2 bg-white rounded border space-y-1">
+                                {Object.entries(event.new_values).map(([key, value]) => (
+                                  <div key={key} className="flex gap-2">
+                                    <span className="font-medium">{key}:</span>
+                                    <span className="text-green-700">{String(value)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                No timeline events yet
+              </div>
+            )}
           </CardContent>
         </Card>
 
