@@ -19,6 +19,7 @@ from app.schemas.reports import (
     ComplianceReport, ExecutiveSummary, ReportFormat, ReportPeriod,
     ReportList, DashboardWidget
 )
+from app.schemas.department import DepartmentStats
 from app.services.reports_service import ReportsService
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
@@ -441,3 +442,61 @@ async def cleanup_old_reports(
         "files_removed": cleaned_count,
         "storage_freed_mb": cleaned_count * 2.1
     }
+
+
+@router.get("/department-stats", response_model=DepartmentStats)
+async def get_department_statistics(
+    department_id: Optional[str] = Query(None, description="Department ID for specific department stats"),
+    contract_id: Optional[str] = Query(None, description="Contract ID for contract-wide stats"),
+    include_subdepartments: bool = Query(True, description="Include sub-departments in statistics"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get visa tracking statistics for a department or contract.
+    
+    **Flexible Filtering:**
+    - Provide `department_id` for specific department statistics
+    - Provide `contract_id` for contract-wide statistics across all departments
+    - Provide both for department stats within specific contract context
+    - `include_subdepartments` controls recursive calculation (default: true)
+    
+    **Returns:**
+    - Beneficiary counts (direct, total, active, inactive)
+    - Visa application counts (total, active, by status, by type)
+    - Expiration alerts (30 days, 90 days, expired)
+    
+    **Access Control:**
+    - ADMIN: Can view all departments and contracts
+    - PM/HR: Can view their contract's departments
+    - MANAGER: Can view their department and sub-departments
+    - BENEFICIARY: Access denied
+    
+    **Use Cases:**
+    - Department tree inline badges: `?department_id=xxx&include_subdepartments=true`
+    - Contract overview: `?contract_id=xxx`
+    - Department drill-down: `?department_id=xxx&include_subdepartments=false`
+    """
+    # Validate that at least one filter is provided
+    if not department_id and not contract_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Must provide either department_id or contract_id"
+        )
+    
+    # Beneficiaries cannot access department stats
+    if current_user.role == UserRole.BENEFICIARY:
+        raise HTTPException(
+            status_code=403,
+            detail="Department statistics not available for beneficiary users"
+        )
+    
+    reports_service = ReportsService(db)
+    
+    return reports_service.generate_department_stats(
+        department_id=department_id,
+        contract_id=contract_id,
+        include_subdepartments=include_subdepartments,
+        current_user_id=current_user.id,
+        current_user_role=current_user.role
+    )

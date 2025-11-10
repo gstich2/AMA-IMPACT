@@ -11,7 +11,7 @@ from sqlalchemy import and_, or_, desc, func, extract, case
 import uuid
 import statistics
 
-from app.models.visa import VisaApplication, VisaStatus, VisaType
+from app.models.visa import VisaApplication, VisaStatus, VisaType, VisaTypeEnum
 from app.models.user import User, UserRole
 from app.models.beneficiary import Beneficiary
 from app.models.department import Department
@@ -30,7 +30,6 @@ class ReportsService:
     
     def __init__(self, db: Session):
         self.db = db
-        self.rbac_service = RBACService(db)
     
     def _get_date_range(self, period: ReportPeriod, start_date: Optional[date], end_date: Optional[date]) -> Tuple[datetime, datetime]:
         """Get date range based on period or custom dates."""
@@ -73,14 +72,22 @@ class ReportsService:
                 query = query.filter(query.column_descriptions[0]['type'].user_id == current_user_id)
         
         elif current_user_role in [UserRole.MANAGER, UserRole.PM]:
-            # Apply hierarchical filtering
-            accessible_user_ids = self.rbac_service.get_accessible_user_ids(
-                current_user_id, current_user_role
-            )
-            if hasattr(query.column_descriptions[0]['type'], 'beneficiary'):
-                query = query.join(Beneficiary).filter(Beneficiary.user_id.in_(accessible_user_ids))
-            elif hasattr(query.column_descriptions[0]['type'], 'user_id'):
-                query = query.filter(query.column_descriptions[0]['type'].user_id.in_(accessible_user_ids))
+            # Apply hierarchical filtering - get accessible users manually
+            current_user = self.db.query(User).filter(User.id == current_user_id).first()
+            if current_user:
+                # Get department hierarchy
+                accessible_user_ids = [current_user_id]
+                if current_user.department:
+                    # Get all users in department and sub-departments
+                    departments = [current_user.department] + current_user.department.get_all_descendants()
+                    dept_ids = [d.id for d in departments]
+                    dept_users = self.db.query(User).filter(User.department_id.in_(dept_ids)).all()
+                    accessible_user_ids.extend([u.id for u in dept_users])
+                
+                if hasattr(query.column_descriptions[0]['type'], 'beneficiary'):
+                    query = query.join(Beneficiary).filter(Beneficiary.user_id.in_(accessible_user_ids))
+                elif hasattr(query.column_descriptions[0]['type'], 'user_id'):
+                    query = query.filter(query.column_descriptions[0]['type'].user_id.in_(accessible_user_ids))
         
         # HR and ADMIN see all data (no additional filtering)
         return query
@@ -250,10 +257,16 @@ class ReportsService:
         users_query = self.db.query(User).filter(User.is_active == True)
         
         if current_user_role in [UserRole.MANAGER, UserRole.PM]:
-            accessible_user_ids = self.rbac_service.get_accessible_user_ids(
-                current_user_id, current_user_role
-            )
-            users_query = users_query.filter(User.id.in_(accessible_user_ids))
+            # Get accessible users manually
+            current_user = self.db.query(User).filter(User.id == current_user_id).first()
+            if current_user:
+                accessible_user_ids = [current_user_id]
+                if current_user.department:
+                    departments = [current_user.department] + current_user.department.get_all_descendants()
+                    dept_ids = [d.id for d in departments]
+                    dept_users = self.db.query(User).filter(User.department_id.in_(dept_ids)).all()
+                    accessible_user_ids.extend([u.id for u in dept_users])
+                users_query = users_query.filter(User.id.in_(accessible_user_ids))
         elif current_user_role == UserRole.BENEFICIARY:
             users_query = users_query.filter(User.id == current_user_id)
         
@@ -501,3 +514,178 @@ class ReportsService:
             ])
         
         return sorted(base_reports)
+    
+    def generate_department_stats(
+        self,
+        department_id: Optional[str],
+        contract_id: Optional[str],
+        include_subdepartments: bool,
+        current_user_id: str,
+        current_user_role: UserRole
+    ):
+        """
+        Generate department statistics focused on visa tracking.
+        
+        Args:
+            department_id: Specific department ID (optional)
+            contract_id: Contract ID for filtering (optional)
+            include_subdepartments: Include recursive sub-department stats
+            current_user_id: Current user's ID for RBAC
+            current_user_role: Current user's role for RBAC
+        
+        Returns:
+            DepartmentStats with beneficiary and visa application statistics
+        """
+        from app.schemas.department import DepartmentStats
+        from app.models.contract import Contract
+        
+        # Get department and contract info
+        department = None
+        contract = None
+        
+        if department_id:
+            department = self.db.query(Department).filter(Department.id == department_id).first()
+            if not department:
+                raise ValueError(f"Department {department_id} not found")
+            contract = department.contract
+            contract_id = contract.id
+        elif contract_id:
+            contract = self.db.query(Contract).filter(Contract.id == contract_id).first()
+            if not contract:
+                raise ValueError(f"Contract {contract_id} not found")
+        
+        # Apply RBAC filtering
+        if current_user_role == UserRole.MANAGER:
+            # Managers can only see their department and sub-departments
+            current_user = self.db.query(User).filter(User.id == current_user_id).first()
+            if department and department.id != current_user.department_id:
+                # Check if requested dept is a sub-department
+                is_accessible = False
+                if current_user.department:
+                    all_subdepts = current_user.department.get_all_descendants()
+                    if department in all_subdepts:
+                        is_accessible = True
+                if not is_accessible:
+                    raise PermissionError("Access denied to this department")
+        
+        elif current_user_role in [UserRole.PM, UserRole.HR]:
+            # PMs and HR can see their contract's departments
+            current_user = self.db.query(User).filter(User.id == current_user_id).first()
+            if current_user.contract_id != contract_id:
+                raise PermissionError("Access denied to this contract")
+        
+        # Get all relevant departments
+        if department and include_subdepartments:
+            departments_to_query = [department] + department.get_all_descendants()
+            dept_ids = [d.id for d in departments_to_query]
+        elif department:
+            dept_ids = [department.id]
+        else:
+            # Contract-wide: get all departments in contract
+            departments_to_query = self.db.query(Department).filter(
+                Department.contract_id == contract_id,
+                Department.is_active == True
+            ).all()
+            dept_ids = [d.id for d in departments_to_query]
+        
+        # Get beneficiaries through User -> Beneficiary relationship
+        # Direct beneficiaries (in specific department only)
+        if department:
+            beneficiaries_direct_query = self.db.query(Beneficiary).join(
+                User, Beneficiary.user_id == User.id
+            ).filter(User.department_id == department.id)
+            beneficiaries_direct = beneficiaries_direct_query.count()
+        else:
+            beneficiaries_direct = 0
+        
+        # Total beneficiaries (including sub-departments)
+        beneficiaries_total_query = self.db.query(Beneficiary).join(
+            User, Beneficiary.user_id == User.id
+        ).filter(User.department_id.in_(dept_ids))
+        
+        beneficiaries_total = beneficiaries_total_query.count()
+        beneficiaries_active = beneficiaries_total_query.filter(Beneficiary.is_active == True).count()
+        beneficiaries_inactive = beneficiaries_total - beneficiaries_active
+        
+        # Get visa applications for these beneficiaries
+        beneficiary_ids = [b.id for b in beneficiaries_total_query.all()]
+        
+        # Initialize defaults for when there are no beneficiaries
+        visa_applications_total = 0
+        visa_applications_active = 0
+        visa_by_status = {}
+        visa_by_type = {}
+        expiring_30 = 0
+        expiring_90 = 0
+        expired = 0
+        
+        if beneficiary_ids:
+            visa_apps_query = self.db.query(VisaApplication).filter(
+                VisaApplication.beneficiary_id.in_(beneficiary_ids)
+            )
+            
+            visa_applications_total = visa_apps_query.count()
+            visa_applications_active = visa_apps_query.filter(
+                VisaApplication.is_active == True
+            ).count()
+            
+            # Breakdown by status
+            for status in VisaStatus:
+                count = visa_apps_query.filter(VisaApplication.status == status).count()
+                if count > 0:
+                    visa_by_status[status.value] = count
+            
+            # Breakdown by type
+            for visa_type in VisaTypeEnum:
+                count = visa_apps_query.filter(VisaApplication.visa_type == visa_type).count()
+                if count > 0:
+                    visa_by_type[visa_type.value] = count
+            
+            # Expiration tracking
+            today = datetime.utcnow().date()
+            thirty_days = today + timedelta(days=30)
+            ninety_days = today + timedelta(days=90)
+            
+            expiring_30 = visa_apps_query.filter(
+                and_(
+                    VisaApplication.expiration_date >= today,
+                    VisaApplication.expiration_date <= thirty_days,
+                    VisaApplication.is_active == True
+                )
+            ).count()
+            
+            expiring_90 = visa_apps_query.filter(
+                and_(
+                    VisaApplication.expiration_date >= today,
+                    VisaApplication.expiration_date <= ninety_days,
+                    VisaApplication.is_active == True
+                )
+            ).count()
+            
+            expired = visa_apps_query.filter(
+                and_(
+                    VisaApplication.expiration_date < today,
+                    VisaApplication.is_active == True
+                )
+            ).count()
+        
+        return DepartmentStats(
+            department_id=department.id if department else None,
+            department_name=department.name if department else None,
+            department_code=department.code if department else None,
+            contract_id=contract.id,
+            contract_code=contract.code,
+            beneficiaries_direct=beneficiaries_direct,
+            beneficiaries_total=beneficiaries_total,
+            beneficiaries_active=beneficiaries_active,
+            beneficiaries_inactive=beneficiaries_inactive,
+            visa_applications_total=visa_applications_total,
+            visa_applications_active=visa_applications_active,
+            visa_applications_by_status=visa_by_status,
+            visa_applications_by_type=visa_by_type,
+            expiring_next_30_days=expiring_30,
+            expiring_next_90_days=expiring_90,
+            expired=expired,
+            generated_at=datetime.utcnow(),
+            include_subdepartments=include_subdepartments
+        )

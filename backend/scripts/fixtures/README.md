@@ -54,19 +54,40 @@ python scripts/fixtures/contracts/seed_assess.py
 ```
 Creates:
 - ASSESS contract (NASA ARC, 2025-2030)
-- 9 departments matching NASA Ames organizational structure:
-  - Entry Systems and Technology Division (TS) with 4 branches:
-    - Thermal Protection Materials Branch (TSM)
-    - Aerothermodynamics Branch (TSA)
-    - Thermo-Physics Facilities Branch (TSF)
-    - Entry Systems and Vehicle Development Branch (TSS)
-  - NASA Advanced Supercomputing Division branches:
-    - Computational Aerosciences Branch (TNA)
-    - Advanced Computing Branch (TNC)
-    - Computational Physics Branch (TNP)
-  - Aeromechanics Office (AV)
-- PM: pm.assess@ama-impact.com (temp password: TempPassword123!)
-- Tech Lead: techlead.assess@ama-impact.com (temp password: TempPassword123!)
+- **13 departments in complete NASA Ames organizational hierarchy:**
+  - **⚠️ CRITICAL: This is the COMPLETE structure. DO NOT SIMPLIFY.**
+  
+  **L1: Entry Systems and Technology Division (TS)** - David Chen (Manager)
+    - L2: TSM (Thermal Protection Materials Branch) - Arnaud Borner
+    - L2: TSA (Aerothermodynamics Branch) - Bhaskaran Rathakrishnan
+    - L2: TSF (Thermo-Physics Facilities Branch) - No manager
+    - L2: TSS (Entry Systems and Vehicle Development Branch) - Blake Lively
+  
+  **L1: NASA Advanced Supercomputing Division (TN)** - Parent department
+    - L2: TNA (Computational Aerosciences Branch) - Gerrit-Daniel Stich
+    - L2: TNP (Computational Physics Branch) - Patricia Ventura Diaz
+  
+  **L1: Aeronautics Directorate (A)** - Parent department
+    - L2: AV (Aeromechanics Office) - Gerrit-Daniel Stich (dual role)
+    - L2: AA (Systems Analysis Office) - Blake Lively (dual role)
+  
+  **L1: Aeroflightdynamics Directorate (Y)** - US Army, Parent department
+    - L2: YA (Computational Aeromechanics Tech Area) - Shirzad Hoseinverdy
+
+- **Users (8 total):**
+  - PM: pm.assess@ama-impact.com (Dave Cornelius)
+  - Tech Lead/TS Manager: techlead.assess@ama-impact.com (David Chen)
+  - **6 Department Managers:**
+    - bhaskaran.rathakrishnan@ama-inc.com (TSA)
+    - arnaud.borner@ama-inc.com (TSM)
+    - blake.lively@ama-inc.com (TSS, AA - dual role)
+    - patricia.ventura@ama-inc.com (TNP)
+    - gerrit-daniel.stich@ama-inc.com (TNA, AV - dual role)
+    - shirzad.hoseinverdy@ama-inc.com (YA - Army)
+
+- All passwords: `TempPassword123!` with `force_password_change=True`
+
+**Note:** Blake Lively and Gerrit-Daniel Stich each manage two departments (dual roles).
 
 ### RSES Contract
 ```bash

@@ -2,17 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { authAPI, dashboardAPI, auditAPI } from '@/lib/api'
-import Sidebar from '@/components/layout/sidebar'
+import AppLayout from '@/components/layout/app-layout'
 import PersonalTodos from '@/components/dashboard/personal-todos'
 import RecentActivity from '@/components/dashboard/recent-activity'
 import { 
   Plane, 
-  LogOut,
-  Users, 
   FileText, 
   Bell, 
   BarChart3,
@@ -20,134 +17,45 @@ import {
   Clock,
   AlertTriangle,
   CheckCircle2,
-  UserPlus
+  UserPlus,
+  Users
 } from 'lucide-react'
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null)
   const [dashboardData, setDashboardData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  
-  console.log('Dashboard render - user:', user, 'dashboardData:', dashboardData, 'loading:', loading)
   const router = useRouter()
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token')
-    if (!token) {
-      router.push('/login')
-      return
-    }
-
-    console.log('Dashboard useEffect started, token exists')
-
-    const loadUserData = async () => {
+    const loadDashboardData = async () => {
       try {
-        console.log('Attempting to load user data...')
-        const userResponse = await authAPI.getCurrentUser()
-        console.log('User data loaded:', userResponse.data)
-        setUser(userResponse.data)
-        
-        // Load dashboard summary
-        try {
-          console.log('Attempting to load dashboard data...')
-          const summaryResponse = await dashboardAPI.getSummary()
-          console.log('Dashboard data loaded:', summaryResponse.data)
-          setDashboardData(summaryResponse.data)
-        } catch (dashError) {
-          console.log('Dashboard API not available, using mock data:', dashError)
-          // Set mock data if dashboard API fails
-          setDashboardData({
-            total_visas: 25,
-            expiring_visas: 3,
-            active_users: 12,
-            overdue_tasks: 1
-          })
-        }
-      } catch (error) {
-        console.error('Failed to load user data:', error)
-        // If authentication fails, redirect to login. If other errors, leave user null so UI prompts appropriately.
-        // Do not inject mock data — we want real backend-driven UI only.
-        try {
-          router.push('/login')
-        } catch (e) {
-          // ignore
-        }
-      } finally {
-        console.log('Setting loading to false')
-        setLoading(false)
+        const summaryResponse = await dashboardAPI.getSummary()
+        setDashboardData(summaryResponse.data)
+      } catch (dashError) {
+        console.log('Dashboard API not available, using mock data:', dashError)
+        // Set mock data if dashboard API fails
+        setDashboardData({
+          total_visas: 25,
+          expiring_visas: 3,
+          active_users: 12,
+          overdue_tasks: 1
+        })
       }
     }
 
-    loadUserData()
-  }, [router])
-
-  const handleLogout = async () => {
-    try {
-      await authAPI.logout()
-    } catch (error) {
-      console.error('Logout failed:', error)
-    } finally {
-      router.push('/login')
-    }
-  }
-
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'ADMIN': return 'destructive'
-      case 'HR': return 'default'
-      case 'PM': return 'secondary'
-      case 'MANAGER': return 'outline'
-      case 'BENEFICIARY': return 'success'
-      default: return 'outline'
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <Plane className="h-6 w-6 text-white" />
-          </div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!user && !loading) {
-    return null // Will redirect to login
-  }
+    loadDashboardData()
+  }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
-      {/* Sidebar - only render when user is loaded */}
-      {user && <Sidebar user={user} />}
-      
-      {/* Main content */}
-      <main className={`flex-1 transition-all duration-300 ${user ? 'md:ml-64' : ''}`}>
-        {/* Header */}
-        <header className="border-b bg-white/80 backdrop-blur-sm">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.full_name || user?.username}</p>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Badge variant={getRoleBadgeVariant(user?.role)} className="text-sm">
-                {user?.role}
-              </Badge>
-              <Button variant="outline" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </header>
+    <AppLayout>
+      <div className="container mx-auto py-8">
+        {/* Dashboard Title */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Welcome back!
+          </p>
+        </div>
 
-        {/* Content */}
-        <div className="p-6">
           {/* Quick Stats */}
           {dashboardData && (
             <div className="grid grid-cols-5 gap-4 mb-8">
@@ -299,11 +207,11 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Personal Todos Widget - only render when user is loaded */}
-          {user && <PersonalTodos user={user} />}
+          {/* Personal Todos Widget */}
+          <PersonalTodos user={{}} />
 
           {/* Recent Activity */}
-          {user && <RecentActivity user={user} />}
+          <RecentActivity user={{}} />
 
         {/* Backend Status */}
         <div className="mt-8">
@@ -333,7 +241,6 @@ export default function Dashboard() {
           </Card>
         </div>
         </div>
-      </main>
-    </div>
+    </AppLayout>
   )
 }

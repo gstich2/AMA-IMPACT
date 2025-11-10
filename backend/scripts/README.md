@@ -119,7 +119,21 @@ Loads basic test data (development only).
 Loads comprehensive ASSESS contract data with real employee visa cases (development only).
 
 **What it does:**
-- Creates ASSESS contract with full org structure (9 departments)
+- Creates ASSESS contract with full NASA Ames organizational structure (13 departments)
+- **NASA Ames Structure:**
+  - **TS (Entry Systems and Technology Division)** - David Chen (Manager)
+    - TSM (Thermal Protection Materials Branch) - Arnaud Borner
+    - TSA (Aerothermodynamics Branch) - Bhaskaran Rathakrishnan
+    - TSF (Thermo-Physics Facilities Branch) - No manager
+    - TSS (Entry Systems and Vehicle Development Branch) - Blake Lively
+  - **TN (NASA Advanced Supercomputing Division)** - Parent department
+    - TNA (Computational Aerosciences Branch) - Gerrit-Daniel Stich
+    - TNP (Computational Physics Branch) - Patricia Ventura Diaz
+  - **A (Aeronautics Directorate)** - Parent department
+    - AV (Aeromechanics Office) - Gerrit-Daniel Stich (dual role)
+    - AA (Systems Analysis Office) - Blake Lively (dual role)
+  - **Y (Aeroflightdynamics Directorate - US Army)** - Parent department
+    - YA (Computational Aeromechanics Tech Area) - Shirzad Hoseinverdy
 - Creates 11 employees including PM and 6 Tech Leads
 - Creates 7 visa applications in various stages (TN, H1B, EB2-NIW, EB-1B, I-485)
 - Creates law firm (Fragomen) with 2 attorneys
@@ -127,15 +141,18 @@ Loads comprehensive ASSESS contract data with real employee visa cases (developm
 - All with realistic data matching actual ASSESS team
 
 **Test Accounts:**
-- `david.cornelius@ama-inc.com` - Project Manager
-- `gerrit-daniel.stich@ama-inc.com` - Tech Lead TNA/AV (H1B)
-- `david.craig@ama-inc.com` - TN visa, EB2-NIW in prep
-- `luis.fernandes@ama-inc.com` - H1B, EB2-NIW I-140 approved
-- `timothy.chau@ama-inc.com` - H1B, marriage GC filed
-- `kiran.ravikumar@ama-inc.com` - H1B, EB2-NIW filed, EB-1B in prep
-- `tove.aagren@ama-inc.com` - H1B, EB2-NIW planned
+- `pm.assess@ama-impact.com` - Project Manager (Dave Cornelius)
+- `techlead.assess@ama-impact.com` - TS Division Manager (David Chen)
+- `bhaskaran.rathakrishnan@ama-inc.com` - TSA Manager
+- `arnaud.borner@ama-inc.com` - TSM Manager
+- `blake.lively@ama-inc.com` - TSS & AA Manager (dual role)
+- `patricia.ventura@ama-inc.com` - TNP Manager
+- `gerrit-daniel.stich@ama-inc.com` - TNA & AV Manager (dual role)
+- `shirzad.hoseinverdy@ama-inc.com` - YA Manager (Army)
 
-All passwords: `TempPass123!`
+All passwords: `TempPassword123!`
+
+**⚠️ CRITICAL:** This is the COMPLETE NASA Ames organizational structure. DO NOT SIMPLIFY.
 
 **⚠️ Do NOT use in production!**
 

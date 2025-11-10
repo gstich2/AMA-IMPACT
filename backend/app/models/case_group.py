@@ -56,6 +56,14 @@ class CaseStatus(str, enum.Enum):
     ON_HOLD = "on_hold"  # Temporarily paused
 
 
+class ApprovalStatus(str, enum.Enum):
+    """Approval workflow status for case groups."""
+    DRAFT = "draft"  # Manager is still preparing the case group
+    PENDING_PM_APPROVAL = "pending_pm_approval"  # Submitted to PM for approval
+    PM_APPROVED = "pm_approved"  # PM has approved, HR can proceed
+    PM_REJECTED = "pm_rejected"  # PM rejected, case is closed
+
+
 class CaseGroup(Base):
     """
     Case Group model - groups related visa applications into a single case.
@@ -75,6 +83,14 @@ class CaseGroup(Base):
     # Foreign keys
     beneficiary_id = Column(String(36), ForeignKey("beneficiaries.id"), nullable=False, index=True)
     responsible_party_id = Column(String(36), ForeignKey("users.id"), nullable=True)  # PM/HR managing this case
+    created_by_manager_id = Column(String(36), ForeignKey("users.id"), nullable=True)  # Manager who created this case group
+    law_firm_id = Column(String(36), ForeignKey("law_firms.id"), nullable=True)  # Assigned law firm for this case
+    
+    # Approval workflow
+    approval_status = Column(Enum(ApprovalStatus), nullable=False, default=ApprovalStatus.DRAFT, index=True)
+    approved_by_pm_id = Column(String(36), ForeignKey("users.id"), nullable=True)  # PM who approved/rejected
+    pm_approval_date = Column(DateTime(timezone=True), nullable=True)  # When PM made decision
+    pm_approval_notes = Column(Text, nullable=True)  # PM's comments on approval/rejection
     
     # Case identification
     case_type = Column(Enum(CaseType), nullable=False, default=CaseType.SINGLE)
@@ -91,6 +107,7 @@ class CaseGroup(Base):
     
     # Additional info
     notes = Column(Text, nullable=True)
+    attorney_portal_link = Column(String(500), nullable=True)  # Link to law firm's document portal
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -100,6 +117,9 @@ class CaseGroup(Base):
     beneficiary = relationship("Beneficiary", back_populates="case_groups")
     applications = relationship("VisaApplication", back_populates="case_group", cascade="all, delete-orphan")
     responsible_party = relationship("User", foreign_keys=[responsible_party_id])
+    created_by_manager = relationship("User", foreign_keys=[created_by_manager_id])
+    approved_by_pm = relationship("User", foreign_keys=[approved_by_pm_id])
+    law_firm = relationship("LawFirm", foreign_keys=[law_firm_id])
     todos = relationship("Todo", back_populates="case_group", cascade="all, delete-orphan")
     
     def __repr__(self):

@@ -120,6 +120,7 @@ Authorization: Bearer <jwt_access_token>
 | `/reports/visa-status` | GET | Detailed visa status analytics |
 | `/reports/user-activity` | GET | User engagement and activity patterns |
 | `/reports/executive-summary` | GET | Executive dashboard with KPIs |
+| `/reports/department-stats` | GET | **NEW** Department visa tracking statistics |
 | `/reports/dashboard/widgets` | GET | Real-time dashboard widgets |
 | `/reports/{id}/status` | GET | Check report generation status |
 | `/reports/{id}/download` | GET | Download generated report files |
@@ -232,12 +233,95 @@ Reports and data exports support multiple formats:
 - `XLSX`: Native Excel format
 - `PDF`: Formatted documents (reports only)
 
+
 ## Rate Limiting
 
 Authentication endpoints are rate-limited:
 - Login attempts: 5 per minute per IP
 - Password reset: 3 per hour per IP
 - Other endpoints: 100 per minute per user
+
+---
+
+## Department Statistics Endpoint
+
+### GET `/api/v1/reports/department-stats`
+
+Get visa tracking statistics for a department or contract. Focuses on beneficiary counts and visa application metrics.
+
+**Query Parameters:**
+- `department_id` (optional): Specific department UUID
+- `contract_id` (optional): Contract UUID for contract-wide stats
+- `include_subdepartments` (default: `true`): Include recursive sub-department statistics
+
+**Requirements:**
+- At least one of `department_id` or `contract_id` must be provided
+- Beneficiary role users cannot access this endpoint
+
+**Access Control:**
+- **ADMIN**: Can view any department/contract
+- **PM/HR**: Can view their contract's departments
+- **MANAGER**: Can view their department and sub-departments only
+- **BENEFICIARY**: Access denied
+
+**Response Schema:**
+```json
+{
+  "department_id": "uuid",
+  "department_name": "Entry Systems and Technology Division",
+  "department_code": "TS",
+  "contract_id": "uuid",
+  "contract_code": "ASSESS",
+  "beneficiaries_direct": 8,
+  "beneficiaries_total": 12,
+  "beneficiaries_active": 11,
+  "beneficiaries_inactive": 1,
+  "visa_applications_total": 25,
+  "visa_applications_active": 18,
+  "visa_applications_by_status": {
+    "DRAFT": 2,
+    "IN_PROGRESS": 3,
+    "APPROVED": 15,
+    "DENIED": 5
+  },
+  "visa_applications_by_type": {
+    "H1B": 10,
+    "L1": 5,
+    "EB2": 8,
+    "TN": 2
+  },
+  "expiring_next_30_days": 2,
+  "expiring_next_90_days": 5,
+  "expired": 1,
+  "generated_at": "2025-11-07T12:00:00Z",
+  "include_subdepartments": true
+}
+```
+
+**Example Requests:**
+
+1. **Specific Department with Sub-departments:**
+```bash
+GET /api/v1/reports/department-stats?department_id=abc123&include_subdepartments=true
+```
+
+2. **Contract-Wide Statistics:**
+```bash
+GET /api/v1/reports/department-stats?contract_id=xyz789
+```
+
+3. **Department Only (No Sub-departments):**
+```bash
+GET /api/v1/reports/department-stats?department_id=abc123&include_subdepartments=false
+```
+
+**Use Cases:**
+- **Tree View Badges**: Display inline statistics for each department
+- **Department Dashboard**: Show detailed metrics for selected department
+- **Contract Overview**: Aggregate all departments within a contract
+- **Manager Dashboard**: Show manager's department team statistics
+
+---
 
 ## Interactive Documentation
 
@@ -251,3 +335,4 @@ For API questions or issues:
 - Check interactive docs at `/docs`
 - Review audit logs for debugging
 - Contact system administrators for access issues
+```

@@ -9,6 +9,7 @@ import { contractsAPI, authAPI, usersAPI } from '@/lib/api'
 import { toast } from 'sonner'
 import ContractDialog from '@/components/admin/contract-dialog'
 import Sidebar from '@/components/layout/sidebar'
+import PageHeader from '@/components/layout/page-header'
 
 interface Contract {
   id: string
@@ -199,29 +200,27 @@ export default function ContractsManagementPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex">
-      {/* Sidebar */}
-      {user && <Sidebar user={user} />}
-      
-      {/* Main content */}
-      <main className={`flex-1 transition-all duration-300 ${user ? 'md:ml-64' : ''}`}>
+    <>
+      <PageHeader user={user} />
+      <Sidebar user={user} />
+      <main className="pt-16 md:ml-64 transition-all duration-300 overflow-y-auto bg-background min-h-screen">
         <div className="container mx-auto py-8">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Contracts Management</h1>
-          <p className="text-muted-foreground">
-            Manage company contracts and project relationships
-          </p>
-        </div>
-        <Button onClick={handleCreateContract} size="sm">
-          <Plus className="h-4 w-4 mr-2" />
-          New Contract
-        </Button>
-      </div>
+          {/* Page Title with Action */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Contracts Management</h1>
+              <p className="text-muted-foreground">
+                Manage company contracts and project relationships
+              </p>
+            </div>
+            <Button onClick={handleCreateContract} size="sm">
+              <Plus className="h-4 w-4 mr-2" />
+              New Contract
+            </Button>
+          </div>
 
-      {/* Filter Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Filter Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card 
           className={`cursor-pointer transition-colors hover:bg-muted/50 ${activeFilter === 'all' ? 'ring-2 ring-primary' : ''}`}
           onClick={() => setActiveFilter('all')}
@@ -395,6 +394,6 @@ export default function ContractsManagementPage() {
       />
         </div>
       </main>
-    </div>
+    </>
   )
 }

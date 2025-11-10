@@ -315,6 +315,16 @@ A FastAPI backend + Next.js frontend application with:
   - Filter by: visa type, status, employee, date range
   - Role-specific data (staff see own, leads see team, PM sees contract)
 
+**F-014a: Department Statistics Report (NEW - v3.0)** ⭐
+- **As a** PM/Manager, **I want to** view visa tracking statistics by department, **so that** I can monitor team compliance
+- **Acceptance Criteria:**
+  - Query department-level or contract-level visa statistics
+  - Metrics: Beneficiary counts (direct/total/active/inactive), visa application counts by status/type
+  - Expiration alerts: 30-day, 90-day, and expired visas
+  - Support for recursive sub-department statistics
+  - Role-based access: ADMIN (all), PM/HR (their contract), MANAGER (their dept only)
+  - Used in department tree view for inline statistics display
+
 **F-015: Expiration Report**
 - **As an** HR rep, **I want to** generate a report of upcoming expirations, **so that** I can plan renewals
 - **Acceptance Criteria:**
@@ -668,11 +678,20 @@ GET    /api/v1/notifications/unread-count  # Badge count
 
 ### 5.7 Reports & Analytics
 ```
-GET    /api/v1/reports/dashboard       # Dashboard stats (role-filtered)
-GET    /api/v1/reports/expiring        # Expiration report (CSV export)
-GET    /api/v1/reports/analytics       # Charts data
-GET    /api/v1/reports/audit-log       # Audit log export (admin)
+GET    /api/v1/reports/dashboard         # Dashboard stats (role-filtered)
+GET    /api/v1/reports/expiring          # Expiration report (CSV export)
+GET    /api/v1/reports/analytics         # Charts data
+GET    /api/v1/reports/audit-log         # Audit log export (admin)
+GET    /api/v1/reports/department-stats  # Department visa tracking statistics (NEW)
 ```
+
+**Department Statistics Endpoint (NEW):**
+- Returns beneficiary and visa application metrics for departments
+- Supports both department-level and contract-level queries
+- Includes recursive sub-department statistics (configurable)
+- Provides expiration alerts (30-day, 90-day, expired)
+- Role-based access control (ADMIN, PM, HR, MANAGER)
+- Used for department tree view inline statistics
 
 ### 5.8 Settings
 ```
@@ -986,6 +1005,7 @@ PATCH  /api/v1/settings                # Update preferences
 |---------|------|--------|---------|
 | 1.0 | 2025-11-03 | GitHub Copilot | Initial PRD - MVP specification |
 | 2.0 | 2025-11-05 | GitHub Copilot | Added Case Groups, Todo System, Law Firm Management. Updated all sections to reflect implemented v2.0 features. Marked Phases 1-3 as completed. Reorganized Phase 4 future enhancements by priority. |
+| 3.0 | 2025-11-07 | GitHub Copilot | Added Department Statistics feature (F-014a). New endpoint `/api/v1/reports/department-stats` for visa tracking metrics focused on beneficiaries. Updated schema to focus on beneficiary counts vs user counts. Comprehensive department-level analytics for PM/Manager dashboards. |
 
 ---
 

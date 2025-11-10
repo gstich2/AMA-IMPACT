@@ -32,7 +32,7 @@ from app.models.beneficiary import Beneficiary
 from app.models.dependent import Dependent, RelationshipType
 from app.models.law_firm import LawFirm
 from app.models.visa import VisaType, VisaApplication, VisaTypeEnum, VisaStatus, VisaCaseStatus, VisaPriority
-from app.models.case_group import CaseGroup, CaseType, CaseStatus
+from app.models.case_group import CaseGroup, CaseType, CaseStatus, ApprovalStatus
 from app.models.audit import AuditLog, AuditAction
 
 
@@ -227,6 +227,38 @@ def seed_development_data():
                 'job_title': 'AV Specialist',
                 'employment_start_date': date(2023, 7, 1),
             },
+            {
+                'email': 'kiran.ravikumar@ama-impact.com',
+                'full_name': 'Kiran Ravikumar',
+                'department_id': dept_tsm.id,
+                'first_name': 'Kiran',
+                'last_name': 'Ravikumar',
+                'country_of_citizenship': 'India',
+                'country_of_birth': 'India',
+                'passport_country': 'India',
+                'passport_expiration': date(2029, 4, 20),
+                'current_visa_type': 'H1B',
+                'current_visa_expiration': date(2027, 3, 15),
+                'i94_expiration': date(2027, 3, 15),
+                'job_title': 'Senior Data Scientist',
+                'employment_start_date': date(2021, 9, 1),
+            },
+            {
+                'email': 'david.craig@ama-impact.com',
+                'full_name': 'David Abraham Penner Craig',
+                'department_id': dept_tna.id,
+                'first_name': 'David',
+                'last_name': 'Craig',
+                'country_of_citizenship': 'Canada',
+                'country_of_birth': 'Canada',
+                'passport_country': 'Canada',
+                'passport_expiration': date(2031, 1, 10),
+                'current_visa_type': 'TN',
+                'current_visa_expiration': date(2026, 6, 30),
+                'i94_expiration': date(2026, 6, 30),
+                'job_title': 'Network Architect',
+                'employment_start_date': date(2020, 5, 15),
+            },
         ]
         
         created_beneficiaries = []
@@ -265,7 +297,7 @@ def seed_development_data():
             db.flush()
             created_beneficiaries.append((user, beneficiary))
         
-        print(f"      ✓ Created 6 users (1 HR, 1 PM, 1 Manager, 4 Beneficiaries)")
+        print(f"      ✓ Created 8 users (1 HR, 1 PM, 1 Manager, 6 Beneficiaries)")
         
         # ============================================================
         # 4. CREATE CASE GROUPS AND VISA APPLICATIONS
@@ -503,7 +535,157 @@ def seed_development_data():
         )
         db.add(future_ead)
         
-        print(f"      ✓ Created 2 case groups and 9 visa applications (including test expiration dates)")
+        # ============================================================
+        # APPROVAL WORKFLOW TEST CASES
+        # ============================================================
+        
+        # CASE 7: Kiran Ravikumar - EB-1A case PENDING PM APPROVAL
+        kiran_user, kiran_ben = created_beneficiaries[4]
+        
+        kiran_case = CaseGroup(
+            beneficiary_id=kiran_ben.id,
+            case_type=CaseType.EB1,
+            case_number='EB1A-2025-003',
+            status=CaseStatus.PLANNING,
+            priority=VisaPriority.HIGH,
+            case_started_date=date.today(),
+            target_completion_date=date(2026, 3, 31),
+            responsible_party_id=pm_user.id,
+            created_by_manager_id=tech_lead.id,
+            approval_status=ApprovalStatus.PENDING_PM_APPROVAL,  # Submitted for PM approval
+            notes='EB-1A Extraordinary Ability application - AI/ML researcher with multiple publications and conference presentations.',
+            attorney_portal_link='https://example-law-firm.com/cases/kiran-ravikumar-eb1a'
+        )
+        db.add(kiran_case)
+        db.flush()
+        
+        # Kiran's current H1B (active)
+        kiran_h1b = VisaApplication(
+            beneficiary_id=kiran_ben.id,
+            case_group_id=None,  # Not part of case group, just current status
+            visa_type_id=h1b_type.id,
+            created_by=admin.id,
+            law_firm_id=law_firm.id,
+            responsible_party_id=pm_user.id,
+            attorney_name=law_firm.contact_person,
+            attorney_email=law_firm.email,
+            visa_type=VisaTypeEnum.H1B,
+            petition_type='I-129',
+            status=VisaStatus.APPROVED,
+            case_status=VisaCaseStatus.ACTIVE,
+            priority=VisaPriority.MEDIUM,
+            approval_date=date(2024, 3, 15),
+            expiration_date=date(2027, 3, 15),
+            receipt_number='WAC2490345678',
+            company_case_id='ASSESS-H1B-KIRAN',
+            notes='Current H1B valid until 2027'
+        )
+        db.add(kiran_h1b)
+        
+        # Kiran's EB-1A I-140 (draft - in case group)
+        kiran_i140 = VisaApplication(
+            beneficiary_id=kiran_ben.id,
+            case_group_id=kiran_case.id,
+            visa_type_id=i140_type.id,
+            created_by=admin.id,
+            law_firm_id=law_firm.id,
+            responsible_party_id=pm_user.id,
+            attorney_name=law_firm.contact_person,
+            attorney_email=law_firm.email,
+            visa_type=VisaTypeEnum.EB1A,
+            petition_type='I-140',
+            status=VisaStatus.DRAFT,
+            case_status=VisaCaseStatus.UPCOMING,
+            priority=VisaPriority.HIGH,
+            company_case_id='ASSESS-EB1A-KIRAN-I140',
+            notes='EB-1A I-140 petition in preparation - awaiting PM approval to proceed'
+        )
+        db.add(kiran_i140)
+        
+        # CASE 8: David Craig - H1B Transfer PENDING PM APPROVAL
+        david_user, david_ben = created_beneficiaries[5]
+        
+        david_h1b_case = CaseGroup(
+            beneficiary_id=david_ben.id,
+            case_type=CaseType.H1B_TRANSFER,
+            case_number='H1B-TRANS-2025-004',
+            status=CaseStatus.PLANNING,
+            priority=VisaPriority.MEDIUM,
+            case_started_date=date.today(),
+            target_completion_date=date(2026, 1, 31),
+            responsible_party_id=pm_user.id,
+            created_by_manager_id=tech_lead.id,
+            approval_status=ApprovalStatus.PENDING_PM_APPROVAL,  # Submitted for PM approval
+            notes='H1B transfer from TN status. Position change to Network Architect role.',
+            attorney_portal_link='https://example-law-firm.com/cases/david-craig-h1b-transfer'
+        )
+        db.add(david_h1b_case)
+        db.flush()
+        
+        # David's H1B transfer application (draft - in case group)
+        david_h1b_app = VisaApplication(
+            beneficiary_id=david_ben.id,
+            case_group_id=david_h1b_case.id,
+            visa_type_id=h1b_type.id,
+            created_by=admin.id,
+            law_firm_id=law_firm.id,
+            responsible_party_id=pm_user.id,
+            attorney_name=law_firm.contact_person,
+            attorney_email=law_firm.email,
+            visa_type=VisaTypeEnum.H1B,
+            petition_type='I-129',
+            status=VisaStatus.DRAFT,
+            case_status=VisaCaseStatus.UPCOMING,
+            priority=VisaPriority.MEDIUM,
+            company_case_id='ASSESS-H1B-DAVID',
+            notes='H1B initial petition - awaiting PM approval to proceed with filing'
+        )
+        db.add(david_h1b_app)
+        
+        # CASE 9: David Craig - EB-2 NIW at I-140 stage (APPROVED by PM, in progress)
+        david_eb2_case = CaseGroup(
+            beneficiary_id=david_ben.id,
+            case_type=CaseType.EB2_NIW,
+            case_number='EB2-NIW-2024-005',
+            status=CaseStatus.IN_PROGRESS,
+            priority=VisaPriority.HIGH,
+            case_started_date=date(2024, 6, 1),
+            target_completion_date=date(2025, 12, 31),
+            responsible_party_id=pm_user.id,
+            created_by_manager_id=tech_lead.id,
+            approval_status=ApprovalStatus.PM_APPROVED,  # Already approved
+            approved_by_pm_id=pm_user.id,
+            pm_approval_date=datetime(2024, 6, 15, 10, 30, 0),
+            pm_approval_notes='Approved - strong NIW case with network security expertise',
+            notes='EB-2 NIW case at I-140 stage. National interest in cybersecurity infrastructure.',
+            attorney_portal_link='https://example-law-firm.com/cases/david-craig-eb2-niw'
+        )
+        db.add(david_eb2_case)
+        db.flush()
+        
+        # David's EB-2 NIW I-140 (filed - in case group)
+        david_i140 = VisaApplication(
+            beneficiary_id=david_ben.id,
+            case_group_id=david_eb2_case.id,
+            visa_type_id=i140_type.id,
+            created_by=admin.id,
+            law_firm_id=law_firm.id,
+            responsible_party_id=pm_user.id,
+            attorney_name=law_firm.contact_person,
+            attorney_email=law_firm.email,
+            visa_type=VisaTypeEnum.EB2NIW,
+            petition_type='I-140',
+            status=VisaStatus.IN_PROGRESS,
+            case_status=VisaCaseStatus.ACTIVE,
+            priority=VisaPriority.HIGH,
+            filing_date=date(2024, 7, 1),
+            receipt_number='LIN2490456789',
+            company_case_id='ASSESS-EB2NIW-DAVID-I140',
+            notes='I-140 filed and pending USCIS review - no RFE yet'
+        )
+        db.add(david_i140)
+        
+        print(f"      ✓ Created 5 case groups (2 with approval workflow) and 13 visa applications")
         
         # ============================================================
         # 5. CREATE DEPENDENTS
@@ -677,18 +859,20 @@ def seed_development_data():
         print("\n✅ Development data seeded successfully!")
         print(f"\n   Summary:")
         print(f"   - 5 Departments (TS→TSM/TSA, TNA, AV)")
-        print(f"   - 6 Users (HR, PM, Manager, 4 Beneficiaries)")
-        print(f"   - 4 Beneficiaries with visa info")
-        print(f"   - 2 Case Groups (EB2 processes)")
-        print(f"   - 7 Visa Applications (3 in groups, 4 standalone)")
+        print(f"   - 8 Users (HR, PM, Manager, 6 Beneficiaries)")
+        print(f"   - 6 Beneficiaries with visa info")
+        print(f"   - 5 Case Groups (2 EB2, 1 EB-1A, 1 H1B Transfer, 1 EB2-NIW with approval workflow)")
+        print(f"   - 13 Visa Applications (various stages)")
         print(f"   - 1 Dependent")
         print(f"   - 7 Todos (3 critical/urgent, 2 high, 2 medium)")
         
         print(f"\n   Test Logins:")
-        print(f"   HR:          hr@ama-impact.com / HR123!")
-        print(f"   PM:          pm@ama-impact.com / PM123!")
-        print(f"   Tech Lead:   techlead@ama-impact.com / Tech123!")
-        print(f"   Beneficiary: priya.sharma@ama-impact.com / Ben123!")
+        print(f"   HR:            hr@ama-impact.com / HR123!")
+        print(f"   PM:            pm@ama-impact.com / PM123!")
+        print(f"   Tech Lead:     techlead@ama-impact.com / Tech123!")
+        print(f"   Beneficiaries: priya.sharma@ama-impact.com / Ben123!")
+        print(f"                  kiran.ravikumar@ama-impact.com / Ben123! (EB-1A pending approval)")
+        print(f"                  david.craig@ama-impact.com / Ben123! (H1B + EB2-NIW cases)")
         
         return True
         

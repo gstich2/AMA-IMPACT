@@ -87,6 +87,11 @@ async def get_department_tree(
     dept_dict = {dept.id: dept for dept in all_departments}
     tree = []
     
+    # Clear any existing children arrays (in case of cached objects)
+    for dept in all_departments:
+        dept.children = []
+    
+    # Build parent-child relationships
     for dept in all_departments:
         if dept.parent_id is None:
             # Top-level department
@@ -95,8 +100,6 @@ async def get_department_tree(
             # Add as child to parent
             parent = dept_dict.get(dept.parent_id)
             if parent:
-                if not hasattr(parent, 'children'):
-                    parent.children = []
                 parent.children.append(dept)
     
     return tree

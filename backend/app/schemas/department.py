@@ -68,15 +68,33 @@ class DepartmentTree(DepartmentSimple):
 
 
 class DepartmentStats(BaseModel):
-    """Department statistics"""
-    department_id: str
-    department_name: str
-    department_code: str
-    direct_users: int
-    total_users: int  # Including sub-departments
-    active_visas: int
-    upcoming_expirations: int  # Next 90 days
-    subdepartments: int
+    """Department statistics for visa tracking"""
+    department_id: Optional[str] = Field(None, description="Department ID (null if contract-wide)")
+    department_name: Optional[str] = Field(None, description="Department name")
+    department_code: Optional[str] = Field(None, description="Department code")
+    contract_id: str = Field(..., description="Contract ID")
+    contract_code: str = Field(..., description="Contract code")
+    
+    # Beneficiary counts (foreign nationals with visa cases)
+    beneficiaries_direct: int = Field(..., description="Beneficiaries in this department only")
+    beneficiaries_total: int = Field(..., description="Total including sub-departments")
+    beneficiaries_active: int = Field(..., description="Active beneficiaries")
+    beneficiaries_inactive: int = Field(..., description="Inactive beneficiaries")
+    
+    # Visa application counts
+    visa_applications_total: int = Field(..., description="Total visa applications")
+    visa_applications_active: int = Field(..., description="Active visa applications")
+    visa_applications_by_status: dict = Field(default_factory=dict, description="Applications by status")
+    visa_applications_by_type: dict = Field(default_factory=dict, description="Applications by visa type")
+    
+    # Expirations (actionable alerts)
+    expiring_next_30_days: int = Field(..., description="Visas expiring in 30 days")
+    expiring_next_90_days: int = Field(..., description="Visas expiring in 90 days")
+    expired: int = Field(..., description="Expired visas")
+    
+    # Metadata
+    generated_at: datetime = Field(..., description="Timestamp of generation")
+    include_subdepartments: bool = Field(..., description="Whether sub-departments are included")
 
 
 # For recursive model
