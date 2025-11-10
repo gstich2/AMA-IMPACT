@@ -72,13 +72,14 @@ interface CaseGroup {
   attorney_portal_link?: string
 }
 
-type SortableColumn = 'case_number' | 'beneficiary' | 'case_type' | 'status' | 'approval_status' | 'priority' | 'case_started_date' | 'target_completion_date' | 'department'
+type SortableColumn = 'case_number' | 'beneficiary' | 'case_type' | 'status' | 'approval_status' | 'priority' | 'case_started_date' | 'target_completion_date' | 'department' | 'assigned_to' | 'law_firm'
 
 export default function CasesPage() {
   const router = useRouter()
   const [caseGroups, setCaseGroups] = useState<CaseGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
+  const [availableCaseTypes, setAvailableCaseTypes] = useState<string[]>([])
   
   // Filters - now using arrays for multi-select
   const [searchTerm, setSearchTerm] = useState('')
@@ -86,6 +87,10 @@ export default function CasesPage() {
   const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>([])
   const [selectedApprovalStatuses, setSelectedApprovalStatuses] = useState<string[]>([])
   const [selectedPriorities, setSelectedPriorities] = useState<string[]>([])
+  
+  // Date-based filters for Overdue and Due Soon
+  const [showOverdueOnly, setShowOverdueOnly] = useState(false)
+  const [showDueSoonOnly, setShowDueSoonOnly] = useState(false)
   
   // Sorting
   const [sortColumn, setSortColumn] = useState<SortableColumn | null>(null)
@@ -101,12 +106,23 @@ export default function CasesPage() {
       
       // Get current user
       const userResponse = await authAPI.getCurrentUser()
+      console.log('Current user loaded:', userResponse.data.email, 'Role:', userResponse.data.role)
       setCurrentUser(userResponse.data)
       
       // Get case groups
       const casesResponse = await caseGroupsAPI.getAll()
-      console.log('Cases loaded:', casesResponse) // Debug log
+      console.log('===== CASES LOADED =====')
+      console.log('Total cases:', casesResponse.length)
+      if (casesResponse.length > 0) {
+        console.log('First case priority:', casesResponse[0].priority, 'Type:', typeof casesResponse[0].priority)
+        console.log('First case data:', JSON.stringify(casesResponse[0], null, 2))
+      }
+      console.log('========================')
       setCaseGroups(casesResponse)
+      
+      // Extract unique case types from loaded data
+      const uniqueCaseTypes = [...new Set(casesResponse.map((c: CaseGroup) => c.case_type).filter(Boolean))].sort() as string[]
+      setAvailableCaseTypes(uniqueCaseTypes)
     } catch (error) {
       console.error('Error loading cases:', error)
     } finally {
@@ -129,6 +145,8 @@ export default function CasesPage() {
     setSelectedCaseTypes([])
     setSelectedApprovalStatuses([])
     setSelectedPriorities([])
+    setShowOverdueOnly(false)
+    setShowDueSoonOnly(false)
   }
 
   const hasActiveFilters = () => {
@@ -136,7 +154,9 @@ export default function CasesPage() {
            selectedStatuses.length > 0 || 
            selectedCaseTypes.length > 0 || 
            selectedApprovalStatuses.length > 0 || 
-           selectedPriorities.length > 0
+           selectedPriorities.length > 0 ||
+           showOverdueOnly ||
+           showDueSoonOnly
   }
 
   // Filter case groups
@@ -153,7 +173,26 @@ export default function CasesPage() {
     const matchesApprovalStatus = selectedApprovalStatuses.length === 0 || selectedApprovalStatuses.includes(caseGroup.approval_status)
     const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(caseGroup.priority)
     
-    return matchesSearch && matchesStatus && matchesCaseType && matchesApprovalStatus && matchesPriority
+    // Date-based filtering for Overdue
+    const matchesOverdue = !showOverdueOnly || (() => {
+      if (!caseGroup.target_completion_date) return false
+      const now = new Date()
+      const targetDate = new Date(caseGroup.target_completion_date)
+      return targetDate < now && !['COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(caseGroup.status)
+    })()
+    
+    // Date-based filtering for Due Soon (next 7 days)
+    const matchesDueSoon = !showDueSoonOnly || (() => {
+      if (!caseGroup.target_completion_date) return false
+      const now = new Date()
+      const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+      const targetDate = new Date(caseGroup.target_completion_date)
+      return targetDate >= now && targetDate <= sevenDaysFromNow && 
+             !['COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(caseGroup.status)
+    })()
+    
+    return matchesSearch && matchesStatus && matchesCaseType && matchesApprovalStatus && 
+           matchesPriority && matchesOverdue && matchesDueSoon
   })
 
   // Sort case groups
@@ -191,6 +230,15 @@ export default function CasesPage() {
       case 'department':
         aValue = a.beneficiary?.user?.department?.code || ''
         bValue = b.beneficiary?.user?.department?.code || ''
+        break
+      case 'assigned_to':
+        aValue = a.created_by_manager?.full_name || a.responsible_party?.full_name || ''
+        bValue = b.created_by_manager?.full_name || b.responsible_party?.full_name || ''
+        break
+      case 'law_firm':
+        // Law firm name would come from relationship if loaded
+        aValue = '' // Placeholder - will show N/A
+        bValue = ''
         break
       case 'case_started_date':
         aValue = a.case_started_date ? new Date(a.case_started_date).getTime() : 0
@@ -282,9 +330,9 @@ export default function CasesPage() {
 
   const getPriorityColorClass = (priority: string) => {
     const colorMap: Record<string, string> = {
-      CRITICAL: 'border-red-500 text-red-700 bg-red-50',
-      URGENT: 'border-orange-500 text-orange-700 bg-orange-50',
-      HIGH: 'border-yellow-500 text-yellow-700 bg-yellow-50',
+      CRITICAL: 'border-red-600 text-red-800 bg-red-100',
+      URGENT: 'border-red-500 text-red-700 bg-red-50',
+      HIGH: 'border-amber-500 text-amber-800 bg-amber-50',
       MEDIUM: 'border-blue-500 text-blue-700 bg-blue-50',
       LOW: 'border-gray-400 text-gray-600 bg-gray-50',
     }
@@ -293,9 +341,9 @@ export default function CasesPage() {
 
   const getRowColorClass = (priority: string) => {
     const colorMap: Record<string, string> = {
-      CRITICAL: 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500',
-      URGENT: 'bg-orange-50 hover:bg-orange-100 border-l-4 border-l-orange-500',
-      HIGH: 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-l-yellow-400',
+      CRITICAL: 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-600',
+      URGENT: 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500',
+      HIGH: 'bg-amber-50 hover:bg-amber-100 border-l-4 border-l-amber-500',
       MEDIUM: 'hover:bg-muted/50',
       LOW: 'hover:bg-muted/50',
     }
@@ -304,29 +352,41 @@ export default function CasesPage() {
 
   const getCaseTypeLabel = (caseType: string) => {
     const typeLabels: Record<string, string> = {
-      H1B: 'H1B',
+      // H1B Cases
+      H1B_INITIAL: 'H1B Initial',
       H1B_TRANSFER: 'H1B Transfer',
       H1B_EXTENSION: 'H1B Extension',
-      L1: 'L1',
+      H1B_AMENDMENT: 'H1B Amendment',
+      H1B: 'H1B',
+      
+      // L1 Cases
+      L1_INITIAL: 'L1 Initial',
       L1_EXTENSION: 'L1 Extension',
-      TN: 'TN',
-      TN_RENEWAL: 'TN Renewal',
-      O1: 'O-1',
+      L1: 'L1',
+      L2: 'L2',
+      
+      // EB Cases (Green Card)
       EB1: 'EB-1',
       EB1A: 'EB-1A',
       EB1B: 'EB-1B',
       EB2: 'EB-2',
       EB2_NIW: 'EB-2 NIW',
       EB3: 'EB-3',
+      
+      // Other visas
+      TN: 'TN',
+      O1: 'O-1',
       PERM: 'PERM',
-      I485: 'I-485 (AOS)',
-      I140: 'I-140',
-      EAD: 'EAD',
-      AP: 'Advance Parole',
-      H4: 'H4',
-      H4_EAD: 'H4 EAD',
-      L2: 'L2',
-      CITIZENSHIP: 'Citizenship',
+      
+      // Student
+      F1_OPT: 'F-1 OPT',
+      F1_STEM_OPT: 'F-1 STEM OPT',
+      
+      // Family
+      FAMILY_BASED: 'Family-Based',
+      
+      // Other
+      SINGLE: 'Single Application',
       OTHER: 'Other',
     }
     return typeLabels[caseType] || caseType
@@ -342,16 +402,80 @@ export default function CasesPage() {
   }
 
   const canCreateCase = () => {
-    return currentUser?.role === 'MANAGER' || currentUser?.role === 'PM' || currentUser?.role === 'HR'
+    const role = currentUser?.role?.toUpperCase()
+    const canCreate = role === 'ADMIN' || role === 'MANAGER' || role === 'PM' || role === 'HR'
+    console.log('canCreateCase?', canCreate, 'Role:', currentUser?.role, 'Normalized:', role)
+    return canCreate
   }
 
   const canEditCase = () => {
-    return currentUser?.role === 'MANAGER' || currentUser?.role === 'PM' || currentUser?.role === 'HR'
+    const role = currentUser?.role?.toUpperCase()
+    const canEdit = role === 'ADMIN' || role === 'MANAGER' || role === 'PM' || role === 'HR'
+    console.log('canEditCase?', canEdit, 'Role:', currentUser?.role, 'Normalized:', role)
+    return canEdit
+  }
+
+  // Calculate stats for overview cards
+  const getStats = () => {
+    const now = new Date()
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+    return {
+      totalActive: caseGroups.filter(c => 
+        ['PLANNING', 'IN_PROGRESS'].includes(c.status)
+      ).length,
+      
+      pendingApproval: caseGroups.filter(c => 
+        c.approval_status === 'PENDING_PM_APPROVAL'
+      ).length,
+      
+      highPriority: caseGroups.filter(c => 
+        ['CRITICAL', 'URGENT', 'HIGH'].includes(c.priority)
+      ).length,
+      
+      overdue: caseGroups.filter(c => {
+        if (!c.target_completion_date) return false
+        const targetDate = new Date(c.target_completion_date)
+        return targetDate < now && !['COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(c.status)
+      }).length,
+      
+      dueSoon: caseGroups.filter(c => {
+        if (!c.target_completion_date) return false
+        const targetDate = new Date(c.target_completion_date)
+        return targetDate >= now && targetDate <= sevenDaysFromNow && 
+               !['COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(c.status)
+      }).length,
+    }
+  }
+
+  const stats = getStats()
+
+  // Helper to apply quick filters from stat cards
+  const applyQuickFilter = (filterType: string) => {
+    clearAllFilters()
+
+    switch (filterType) {
+      case 'active':
+        setSelectedStatuses(['PLANNING', 'IN_PROGRESS'])
+        break
+      case 'pending':
+        setSelectedApprovalStatuses(['PENDING_PM_APPROVAL'])
+        break
+      case 'high-priority':
+        setSelectedPriorities(['CRITICAL', 'URGENT', 'HIGH'])
+        break
+      case 'overdue':
+        setShowOverdueOnly(true)
+        break
+      case 'due-soon':
+        setShowDueSoonOnly(true)
+        break
+    }
   }
 
   return (
     <AppLayout>
-      <div className="container mx-auto py-6 space-y-6">
+      <div className="max-w-[95%] mx-auto py-6 space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -369,6 +493,104 @@ export default function CasesPage() {
               New Case
             </Button>
           )}
+        </div>
+
+        {/* Overview Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {/* Total Active Cases */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-blue-500"
+            onClick={() => applyQuickFilter('active')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Active Cases</p>
+                  <p className="text-3xl font-bold text-blue-600 mt-2">{stats.totalActive}</p>
+                </div>
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FolderOpen className="h-6 w-6 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Planning + In Progress</p>
+            </CardContent>
+          </Card>
+
+          {/* Pending Approvals */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-yellow-500"
+            onClick={() => applyQuickFilter('pending')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Pending Approval</p>
+                  <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.pendingApproval}</p>
+                </div>
+                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-yellow-600" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Awaiting PM review</p>
+            </CardContent>
+          </Card>
+
+          {/* High Priority */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-red-500"
+            onClick={() => applyQuickFilter('high-priority')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">High Priority</p>
+                  <p className="text-3xl font-bold text-red-600 mt-2">{stats.highPriority}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Critical, Urgent, High</p>
+            </CardContent>
+          </Card>
+
+          {/* Overdue */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-red-600"
+            onClick={() => applyQuickFilter('overdue')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Overdue</p>
+                  <p className="text-3xl font-bold text-red-700 mt-2">{stats.overdue}</p>
+                </div>
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <XCircle className="h-6 w-6 text-red-700" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Past deadline</p>
+            </CardContent>
+          </Card>
+
+          {/* Due Soon */}
+          <Card 
+            className="cursor-pointer hover:shadow-lg transition-shadow border-l-4 border-l-orange-500"
+            onClick={() => applyQuickFilter('due-soon')}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Due Soon</p>
+                  <p className="text-3xl font-bold text-orange-600 mt-2">{stats.dueSoon}</p>
+                </div>
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <Clock className="h-6 w-6 text-orange-600" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Next 7 days</p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters and Actions */}
@@ -421,15 +643,11 @@ export default function CasesPage() {
                   <SelectValue placeholder="Add Case Type Filter" />
                 </SelectTrigger>
                 <SelectContent className="bg-white">
-                  <SelectItem value="H1B">H1B</SelectItem>
-                  <SelectItem value="H1B_TRANSFER">H1B Transfer</SelectItem>
-                  <SelectItem value="EB1">EB-1</SelectItem>
-                  <SelectItem value="EB1A">EB-1A</SelectItem>
-                  <SelectItem value="EB2">EB-2</SelectItem>
-                  <SelectItem value="EB2_NIW">EB-2 NIW</SelectItem>
-                  <SelectItem value="TN">TN</SelectItem>
-                  <SelectItem value="PERM">PERM</SelectItem>
-                  <SelectItem value="I485">I-485</SelectItem>
+                  {availableCaseTypes.map(caseType => (
+                    <SelectItem key={caseType} value={caseType}>
+                      {getCaseTypeLabel(caseType)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -508,6 +726,26 @@ export default function CasesPage() {
                     <X className="h-3 w-3 ml-2" />
                   </Button>
                 ))}
+                {showOverdueOnly && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowOverdueOnly(false)}
+                  >
+                    Overdue Only
+                    <X className="h-3 w-3 ml-2" />
+                  </Button>
+                )}
+                {showDueSoonOnly && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowDueSoonOnly(false)}
+                  >
+                    Due Soon (7 days)
+                    <X className="h-3 w-3 ml-2" />
+                  </Button>
+                )}
               </div>
             )}
 
@@ -582,14 +820,30 @@ export default function CasesPage() {
                           {getSortIcon('priority')}
                         </div>
                       </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('approval_status')}>
+                        <div className="flex items-center">
+                          Approval
+                          {getSortIcon('approval_status')}
+                        </div>
+                      </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('target_completion_date')}>
                         <div className="flex items-center">
                           Next Deadline
                           {getSortIcon('target_completion_date')}
                         </div>
                       </TableHead>
-                      <TableHead>Assigned To</TableHead>
-                      <TableHead>Law Firm</TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('assigned_to')}>
+                        <div className="flex items-center">
+                          Assigned To
+                          {getSortIcon('assigned_to')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('law_firm')}>
+                        <div className="flex items-center">
+                          Law Firm
+                          {getSortIcon('law_firm')}
+                        </div>
+                      </TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -626,6 +880,7 @@ export default function CasesPage() {
                         </TableCell>
                         <TableCell>{getStatusBadge(caseGroup.status)}</TableCell>
                         <TableCell>{getPriorityBadge(caseGroup.priority)}</TableCell>
+                        <TableCell>{getApprovalStatusBadge(caseGroup.approval_status)}</TableCell>
                         <TableCell className="text-sm">
                           {formatDate(caseGroup.target_completion_date)}
                         </TableCell>
@@ -646,21 +901,22 @@ export default function CasesPage() {
                                 e.stopPropagation()
                                 router.push(`/cases/${caseGroup.id}`)
                               }}
+                              title="View case details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            {canEditCase() && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  router.push(`/cases/${caseGroup.id}`)
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/cases/${caseGroup.id}`)
+                              }}
+                              title="Edit case"
+                              className={!canEditCase() ? 'hidden' : ''}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

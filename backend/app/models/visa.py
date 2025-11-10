@@ -25,28 +25,29 @@ class VisaTypeEnum(str, enum.Enum):
 
 class VisaStatus(str, enum.Enum):
     """Visa application status enumeration."""
-    DRAFT = "draft"
-    SUBMITTED = "submitted"
-    IN_PROGRESS = "in_progress"
-    APPROVED = "approved"
-    DENIED = "denied"
-    EXPIRED = "expired"
-    RENEWED = "renewed"
+    DRAFT = "DRAFT"
+    SUBMITTED = "SUBMITTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    APPROVED = "APPROVED"
+    DENIED = "DENIED"
+    EXPIRED = "EXPIRED"
+    RENEWED = "RENEWED"
 
 
 class VisaCaseStatus(str, enum.Enum):
     """Visa case status enumeration."""
-    UPCOMING = "upcoming"  # Future case, not yet started
-    ACTIVE = "active"      # Currently working on
-    FINALIZED = "finalized"  # Completed (approved or denied)
+    UPCOMING = "UPCOMING"  # Future case, not yet started
+    ACTIVE = "ACTIVE"      # Currently working on
+    FINALIZED = "FINALIZED"  # Completed (approved or denied)
 
 
 class VisaPriority(str, enum.Enum):
     """Visa application priority enumeration."""
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    CRITICAL = "critical"
+    CRITICAL = "CRITICAL"
+    URGENT = "URGENT"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
 
 
 class VisaApplication(Base):

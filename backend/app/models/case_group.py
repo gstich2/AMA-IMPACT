@@ -13,55 +13,55 @@ from app.models.visa import VisaPriority
 class CaseType(str, enum.Enum):
     """Types of visa cases - multi-step or single applications."""
     # Green Card Cases (Employment-Based)
-    EB1 = "eb1"  # EB-1 Extraordinary Ability
-    EB2 = "eb2"  # EB-2 Advanced Degree or Exceptional Ability
-    EB3 = "eb3"  # EB-3 Skilled Worker or Professional
-    EB2_NIW = "eb2_niw"  # EB-2 National Interest Waiver
+    EB1 = "EB1"  # EB-1 Extraordinary Ability
+    EB2 = "EB2"  # EB-2 Advanced Degree or Exceptional Ability
+    EB3 = "EB3"  # EB-3 Skilled Worker or Professional
+    EB2_NIW = "EB2_NIW"  # EB-2 National Interest Waiver
     
     # PERM Labor Certification
-    PERM = "perm"  # PERM Labor Certification Process
+    PERM = "PERM"  # PERM Labor Certification Process
     
     # H1B Cases
-    H1B_INITIAL = "h1b_initial"  # Initial H1B petition
-    H1B_EXTENSION = "h1b_extension"  # H1B extension
-    H1B_TRANSFER = "h1b_transfer"  # H1B transfer to new employer
-    H1B_AMENDMENT = "h1b_amendment"  # H1B amendment (location/role change)
+    H1B_INITIAL = "H1B_INITIAL"  # Initial H1B petition
+    H1B_EXTENSION = "H1B_EXTENSION"  # H1B extension
+    H1B_TRANSFER = "H1B_TRANSFER"  # H1B transfer to new employer
+    H1B_AMENDMENT = "H1B_AMENDMENT"  # H1B amendment (location/role change)
     
     # Other Nonimmigrant Visas
-    L1_INITIAL = "l1_initial"  # L-1 Intracompany Transfer
-    L1_EXTENSION = "l1_extension"  # L-1 Extension
-    O1 = "o1"  # O-1 Extraordinary Ability
-    TN = "tn"  # TN NAFTA Professional
+    L1_INITIAL = "L1_INITIAL"  # L-1 Intracompany Transfer
+    L1_EXTENSION = "L1_EXTENSION"  # L-1 Extension
+    O1 = "O1"  # O-1 Extraordinary Ability
+    TN = "TN"  # TN NAFTA Professional
     
     # Student/Training
-    F1_OPT = "f1_opt"  # F-1 Optional Practical Training
-    F1_STEM_OPT = "f1_stem_opt"  # F-1 STEM OPT Extension
+    F1_OPT = "F1_OPT"  # F-1 Optional Practical Training
+    F1_STEM_OPT = "F1_STEM_OPT"  # F-1 STEM OPT Extension
     
     # Family-Based
-    FAMILY_BASED = "family_based"  # Family-based immigration
+    FAMILY_BASED = "FAMILY_BASED"  # Family-based immigration
     
     # Other
-    SINGLE = "single"  # Single standalone application
-    OTHER = "other"  # Other case types
+    SINGLE = "SINGLE"  # Single standalone application
+    OTHER = "OTHER"  # Other case types
 
 
 class CaseStatus(str, enum.Enum):
     """Overall status of a case group."""
-    PLANNING = "planning"  # Case being planned/prepared
-    IN_PROGRESS = "in_progress"  # One or more applications filed
-    PENDING = "pending"  # All applications filed, awaiting decisions
-    APPROVED = "approved"  # Case successfully completed
-    DENIED = "denied"  # Case denied
-    WITHDRAWN = "withdrawn"  # Case withdrawn
-    ON_HOLD = "on_hold"  # Temporarily paused
+    PLANNING = "PLANNING"  # Case being planned/prepared
+    IN_PROGRESS = "IN_PROGRESS"  # One or more applications filed
+    PENDING = "PENDING"  # All applications filed, awaiting decisions
+    APPROVED = "APPROVED"  # Case successfully completed
+    DENIED = "DENIED"  # Case denied
+    WITHDRAWN = "WITHDRAWN"  # Case withdrawn
+    ON_HOLD = "ON_HOLD"  # Temporarily paused
 
 
 class ApprovalStatus(str, enum.Enum):
     """Approval workflow status for case groups."""
-    DRAFT = "draft"  # Manager is still preparing the case group
-    PENDING_PM_APPROVAL = "pending_pm_approval"  # Submitted to PM for approval
-    PM_APPROVED = "pm_approved"  # PM has approved, HR can proceed
-    PM_REJECTED = "pm_rejected"  # PM rejected, case is closed
+    DRAFT = "DRAFT"  # Manager is still preparing the case group
+    PENDING_PM_APPROVAL = "PENDING_PM_APPROVAL"  # Submitted to PM for approval
+    PM_APPROVED = "PM_APPROVED"  # PM has approved, HR can proceed
+    PM_REJECTED = "PM_REJECTED"  # PM rejected, case is closed
 
 
 class CaseGroup(Base):

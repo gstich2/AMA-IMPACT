@@ -10,6 +10,8 @@ from app.core.database import get_db
 from app.core.security import get_current_active_user
 from app.models.case_group import CaseGroup, CaseType
 from app.models.user import User, UserRole
+from app.models.beneficiary import Beneficiary
+from app.models.department import Department
 from app.schemas.case_group import (
     CaseGroupCreate,
     CaseGroupUpdate,
@@ -46,7 +48,6 @@ def create_case_group(
     
     # If user is PM/MANAGER, verify beneficiary is in same organization
     if current_user.role in [UserRole.PM, UserRole.MANAGER]:
-        from app.models.beneficiary import Beneficiary
         beneficiary = db.query(Beneficiary).filter(
             Beneficiary.id == case_group_in.beneficiary_id
         ).first()
@@ -91,12 +92,16 @@ def list_case_groups(
     - PM, MANAGER: Can view case groups for beneficiaries in their organization
     - BENEFICIARY: Can only view their own case groups
     """
-    query = db.query(CaseGroup)
+    # Eagerly load relationships for list view
+    query = db.query(CaseGroup).options(
+        joinedload(CaseGroup.beneficiary).joinedload(Beneficiary.user).joinedload(User.department),
+        joinedload(CaseGroup.responsible_party),
+        joinedload(CaseGroup.created_by_manager),
+    )
     
     # Apply role-based filtering
     if current_user.role == UserRole.BENEFICIARY:
         # Beneficiaries can only see their own case groups
-        from app.models.beneficiary import Beneficiary
         beneficiary = db.query(Beneficiary).filter(
             Beneficiary.user_id == current_user.id
         ).first()
@@ -106,7 +111,6 @@ def list_case_groups(
     
     elif current_user.role in [UserRole.PM, UserRole.MANAGER]:
         # PM/Manager can see case groups for beneficiaries in their contract
-        from app.models.beneficiary import Beneficiary
         beneficiary_ids = db.query(Beneficiary.id).join(User).filter(
             User.contract_id == current_user.contract_id
         ).all()
@@ -159,7 +163,6 @@ def get_case_group(
     
     # Check permissions
     if current_user.role == UserRole.BENEFICIARY:
-        from app.models.beneficiary import Beneficiary
         beneficiary = db.query(Beneficiary).filter(
             Beneficiary.user_id == current_user.id
         ).first()
@@ -338,7 +341,6 @@ def submit_case_group_for_approval(
         case_group.notes = (case_group.notes or "") + f"\n[Manager submission notes]: {submit_data.notes}"
     
     # Get the contract's PM to notify
-    from app.models.beneficiary import Beneficiary
     beneficiary = db.query(Beneficiary).filter(Beneficiary.id == case_group.beneficiary_id).first()
     if beneficiary and beneficiary.user.contract_id:
         contract = db.query(Contract).filter(Contract.id == beneficiary.user.contract_id).first()
@@ -407,7 +409,6 @@ def approve_case_group(
     
     # Verify PM is managing the correct contract
     if current_user.role == UserRole.PM:
-        from app.models.beneficiary import Beneficiary
         beneficiary = db.query(Beneficiary).filter(Beneficiary.id == case_group.beneficiary_id).first()
         if not beneficiary or beneficiary.user.contract_id != current_user.contract_id:
             raise HTTPException(
@@ -563,7 +564,6 @@ def reject_case_group(
     
     # Verify PM is managing the correct contract
     if current_user.role == UserRole.PM:
-        from app.models.beneficiary import Beneficiary
         beneficiary = db.query(Beneficiary).filter(Beneficiary.id == case_group.beneficiary_id).first()
         if not beneficiary or beneficiary.user.contract_id != current_user.contract_id:
             raise HTTPException(

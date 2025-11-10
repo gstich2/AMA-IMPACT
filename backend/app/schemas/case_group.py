@@ -8,6 +8,41 @@ from app.models.case_group import CaseType, CaseStatus, ApprovalStatus
 from app.models.visa import VisaPriority
 
 
+# Import beneficiary and user schemas for nested responses
+class DepartmentInResponse(BaseModel):
+    """Minimal department info for nested responses."""
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    code: str
+    name: str
+
+
+class UserInResponse(BaseModel):
+    """Minimal user info for nested responses."""
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    email: str
+    full_name: str
+    department: Optional[DepartmentInResponse] = None
+
+
+class BeneficiaryInResponse(BaseModel):
+    """Minimal beneficiary info for nested responses."""
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    first_name: str
+    last_name: str
+    user: Optional[UserInResponse] = None
+
+
+class ResponsiblePartyInResponse(BaseModel):
+    """Minimal responsible party (user) info."""
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    full_name: str
+    email: str
+
+
 class CaseGroupBase(BaseModel):
     """Base schema for CaseGroup."""
     case_type: CaseType = Field(..., description="Type of visa case")
@@ -55,6 +90,11 @@ class CaseGroupResponse(CaseGroupBase):
     pm_approval_notes: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    
+    # Nested relationships for list view
+    beneficiary: Optional[BeneficiaryInResponse] = None
+    responsible_party: Optional[ResponsiblePartyInResponse] = None
+    created_by_manager: Optional[ResponsiblePartyInResponse] = None
 
 
 class CaseGroupWithApplications(CaseGroupResponse):
