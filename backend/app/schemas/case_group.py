@@ -1,6 +1,6 @@
 """Pydantic schemas for CaseGroup model."""
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, computed_field
 from typing import Optional, List, Any
 from datetime import date, datetime
 
@@ -17,13 +17,23 @@ class DepartmentInResponse(BaseModel):
     name: str
 
 
+class ManagerInResponse(BaseModel):
+    """Minimal manager (user) info for nested responses."""
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    email: str
+    full_name: str
+
+
 class UserInResponse(BaseModel):
     """Minimal user info for nested responses."""
     model_config = ConfigDict(from_attributes=True)
     id: str
     email: str
     full_name: str
+    role: Optional[str] = None
     department: Optional[DepartmentInResponse] = None
+    reports_to: Optional[ManagerInResponse] = None  # Manager
 
 
 class BeneficiaryInResponse(BaseModel):
@@ -32,7 +42,23 @@ class BeneficiaryInResponse(BaseModel):
     id: str
     first_name: str
     last_name: str
+    job_title: Optional[str] = None
+    country_of_citizenship: Optional[str] = None
+    current_visa_type: Optional[str] = None
+    current_visa_expiration: Optional[date] = None
+    employment_start_date: Optional[date] = None
+    i94_expiration: Optional[date] = None
     user: Optional[UserInResponse] = None
+
+
+class LawFirmInResponse(BaseModel):
+    """Law firm info for nested responses."""
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    name: str
+    contact_person: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
 
 
 class ResponsiblePartyInResponse(BaseModel):
@@ -41,6 +67,8 @@ class ResponsiblePartyInResponse(BaseModel):
     id: str
     full_name: str
     email: str
+    role: Optional[str] = None
+    department: Optional[DepartmentInResponse] = None
 
 
 class CaseGroupBase(BaseModel):
@@ -95,13 +123,36 @@ class CaseGroupResponse(CaseGroupBase):
     beneficiary: Optional[BeneficiaryInResponse] = None
     responsible_party: Optional[ResponsiblePartyInResponse] = None
     created_by_manager: Optional[ResponsiblePartyInResponse] = None
+    law_firm: Optional[LawFirmInResponse] = None
+    approved_by_pm: Optional[ResponsiblePartyInResponse] = None
+    
+    @computed_field
+    @property
+    def days_since_initiated(self) -> Optional[int]:
+        """Calculate days since case was started."""
+        if self.case_started_date:
+            delta = date.today() - self.case_started_date
+            return delta.days
+        return None
+
+
+class VisaApplicationInResponse(BaseModel):
+    """Minimal visa application info for nested responses."""
+    model_config = ConfigDict(from_attributes=True, use_enum_values=True)
+    id: str
+    visa_type: str
+    petition_type: Optional[str] = None
+    status: str
+    receipt_number: Optional[str] = None
+    filing_date: Optional[date] = None
+    approval_date: Optional[date] = None
 
 
 class CaseGroupWithApplications(CaseGroupResponse):
     """Schema for CaseGroup with related visa applications."""
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
     
-    applications: List[Any] = []  # List of VisaApplication objects
+    applications: List[VisaApplicationInResponse] = []
 
 
 class CaseGroupSubmitForApproval(BaseModel):

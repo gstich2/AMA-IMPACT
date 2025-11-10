@@ -874,11 +874,13 @@ PATCH  /api/v1/settings                # Update preferences
 
 ### High Priority 🎯
 
-**F-030: Workflow Approvals & Delegation**
-- PM approval for visa requests before law firm submission
-- Task delegation between HR/PM/Managers
-- Approval workflow with comments and history
-- Effort: Medium (2-3 weeks)
+**F-030: Workflow Approvals & Delegation** (PARTIALLY COMPLETED)
+- ✅ PM approval for case groups with status transitions (DRAFT → PENDING_PM_APPROVAL → APPROVED/REJECTED)
+- ✅ Approval endpoints: `/case-groups/{id}/submit-for-approval`, `/case-groups/{id}/approve`, `/case-groups/{id}/reject`
+- ✅ Audit logging captures all approval workflow changes (who approved/rejected, when, with what reason)
+- ✅ Timeline endpoint `/case-groups/{id}/timeline` provides unified history (audit + milestones + todos)
+- ⚠️ Still needed: Task delegation between HR/PM/Managers
+- Effort: 1-2 weeks remaining for delegation features
 
 **F-031: Cost Tracking**
 - Track legal fees, filing fees, other costs per visa application

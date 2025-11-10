@@ -78,11 +78,19 @@ Authorization: Bearer <jwt_access_token>
 | `/todos/bulk-complete` | POST | Mark multiple tasks complete |
 | `/todos/metrics` | GET | Task performance analytics |
 
-### 🔗 Supporting Data
+### � Case Group Management
 | Endpoint | Method | Description |
 |----------|---------|-------------|
 | `/case-groups/` | GET, POST | Immigration pathway grouping |
-| `/case-groups/{id}` | GET, PUT, DELETE | Case group operations |
+| `/case-groups/{id}` | GET, PATCH, DELETE | Case group operations with full nested data |
+| `/case-groups/{id}/submit-for-approval` | POST | Submit case to PM for approval |
+| `/case-groups/{id}/approve` | POST | PM approves case (assigns HR + law firm) |
+| `/case-groups/{id}/reject` | POST | PM rejects case with reason |
+| `/case-groups/{id}/timeline` | GET | Unified timeline (audit + milestones + todos) |
+
+### 🔗 Supporting Data
+| Endpoint | Method | Description |
+|----------|---------|-------------|
 | `/law-firms/` | GET, POST | Legal service provider management |
 | `/law-firms/{id}` | GET, PUT, DELETE | Law firm operations |
 

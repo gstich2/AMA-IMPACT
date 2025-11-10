@@ -131,6 +131,9 @@ AMA-IMPACT/
 - **Department Management**: Full CRUD for organizational units with tree hierarchy
 - **Visa Tracking**: H-1B, L-1, O-1, TN, EB-1A/B, EB-2, PERM, OPT, EAD, Green Card
 - **Case Groups**: Organize related visa applications (e.g., H1B → Green Card pathway)
+  - PM approval workflow with status transitions (DRAFT → PENDING_PM_APPROVAL → APPROVED/REJECTED)
+  - Timeline endpoint combines audit logs, milestones, and todos for complete case history
+  - Automatic HR and law firm assignment on approval
 - **Beneficiary System**: Separation of users from foreign nationals
 
 ### Task Management

@@ -7,6 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Dialog,
   DialogContent,
@@ -15,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { caseGroupsAPI, authAPI, visaAPI } from '@/lib/api'
+import { caseGroupsAPI, authAPI, visaAPI, lawFirmsAPI, usersAPI } from '@/lib/api'
 import { 
   FolderOpen, 
   ArrowLeft,
@@ -96,6 +104,12 @@ export default function CaseDetailPage() {
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject' | null>(null)
   const [approvalNotes, setApprovalNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  
+  // Approval-specific fields
+  const [hrUsers, setHrUsers] = useState<any[]>([])
+  const [lawFirms, setLawFirms] = useState<any[]>([])
+  const [selectedHrUser, setSelectedHrUser] = useState('')
+  const [selectedLawFirm, setSelectedLawFirm] = useState('')
 
   useEffect(() => {
     loadData()
@@ -141,18 +155,36 @@ export default function CaseDetailPage() {
       setSubmitting(true)
       
       if (approvalAction === 'approve') {
-        await caseGroupsAPI.approve(caseGroup.id, approvalNotes)
+        // Validation for approval
+        if (!selectedHrUser) {
+          alert('Please select an HR user to assign this case')
+          return
+        }
+        if (!selectedLawFirm) {
+          alert('Please select a law firm for this case')
+          return
+        }
+        
+        await caseGroupsAPI.approve(caseGroup.id, {
+          approval_notes: approvalNotes,
+          assigned_hr_user_id: selectedHrUser,
+          law_firm_id: selectedLawFirm
+        })
       } else {
         if (!approvalNotes.trim()) {
           alert('Please provide rejection notes')
           return
         }
-        await caseGroupsAPI.reject(caseGroup.id, approvalNotes)
+        await caseGroupsAPI.reject(caseGroup.id, {
+          rejection_reason: approvalNotes
+        })
       }
       
       setShowApprovalDialog(false)
       setApprovalNotes('')
       setApprovalAction(null)
+      setSelectedHrUser('')
+      setSelectedLawFirm('')
       await loadData()
     } catch (error) {
       console.error('Error processing approval:', error)
@@ -162,34 +194,55 @@ export default function CaseDetailPage() {
     }
   }
 
-  const openApprovalDialog = (action: 'approve' | 'reject') => {
+  const openApprovalDialog = async (action: 'approve' | 'reject') => {
     setApprovalAction(action)
     setApprovalNotes('')
+    setSelectedHrUser('')
+    setSelectedLawFirm('')
+    
+    // Load HR users and law firms when opening approval dialog
+    if (action === 'approve') {
+      try {
+        const [usersResponse, lawFirmsResponse] = await Promise.all([
+          usersAPI.getAll({ role: 'HR' }),
+          lawFirmsAPI.getAll()
+        ])
+        setHrUsers(usersResponse)
+        setLawFirms(lawFirmsResponse)
+      } catch (error) {
+        console.error('Error loading HR users or law firms:', error)
+      }
+    }
+    
     setShowApprovalDialog(true)
   }
 
   const canSubmitForApproval = () => {
     if (!caseGroup || !currentUser) return false
+    const role = currentUser.role?.toUpperCase()
     return (
       caseGroup.approval_status === 'DRAFT' &&
-      (currentUser.role === 'MANAGER' || currentUser.role === 'HR')
+      (role === 'MANAGER' || role === 'HR' || role === 'ADMIN')
     )
   }
 
   const canApprove = () => {
     if (!caseGroup || !currentUser) return false
+    const role = currentUser.role?.toUpperCase()
     return (
       caseGroup.approval_status === 'PENDING_PM_APPROVAL' &&
-      currentUser.role === 'PM'
+      (role === 'PM' || role === 'ADMIN')
     )
   }
 
   const canEdit = () => {
     if (!caseGroup || !currentUser) return false
+    const role = currentUser.role?.toUpperCase()
     return (
-      currentUser.role === 'PM' ||
-      currentUser.role === 'MANAGER' ||
-      currentUser.role === 'HR'
+      role === 'ADMIN' ||
+      role === 'PM' ||
+      role === 'MANAGER' ||
+      role === 'HR'
     )
   }
 
@@ -630,25 +683,70 @@ export default function CaseDetailPage() {
 
       {/* Approval Dialog */}
       <Dialog open={showApprovalDialog} onOpenChange={setShowApprovalDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {approvalAction === 'approve' ? 'Approve Case' : 'Reject Case'}
             </DialogTitle>
             <DialogDescription>
               {approvalAction === 'approve' 
-                ? 'Please provide any approval notes (optional).'
+                ? 'Assign an HR user and law firm, and optionally add approval notes.'
                 : 'Please provide rejection notes explaining why this case is being rejected.'}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Textarea
-              placeholder={approvalAction === 'approve' ? 'Approval notes (optional)...' : 'Rejection notes (required)...'}
-              value={approvalNotes}
-              onChange={(e) => setApprovalNotes(e.target.value)}
-              rows={4}
-              className="w-full"
-            />
+          <div className="py-4 space-y-4">
+            {approvalAction === 'approve' && (
+              <>
+                {/* HR User Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="hr-user">Assign HR User *</Label>
+                  <Select value={selectedHrUser} onValueChange={setSelectedHrUser}>
+                    <SelectTrigger id="hr-user" className="w-full">
+                      <SelectValue placeholder="Select HR user to assign this case" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {hrUsers.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.full_name} ({user.email})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Law Firm Selection */}
+                <div className="space-y-2">
+                  <Label htmlFor="law-firm">Assign Law Firm *</Label>
+                  <Select value={selectedLawFirm} onValueChange={setSelectedLawFirm}>
+                    <SelectTrigger id="law-firm" className="w-full">
+                      <SelectValue placeholder="Select law firm for this case" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white">
+                      {lawFirms.map((firm) => (
+                        <SelectItem key={firm.id} value={firm.id}>
+                          {firm.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {/* Notes/Comments */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">
+                {approvalAction === 'approve' ? 'Approval Notes (Optional)' : 'Rejection Reason *'}
+              </Label>
+              <Textarea
+                id="notes"
+                placeholder={approvalAction === 'approve' ? 'Add any approval notes or comments...' : 'Explain why this case is being rejected...'}
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                rows={4}
+                className="w-full"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button
@@ -663,7 +761,7 @@ export default function CaseDetailPage() {
               onClick={handleApprovalAction}
               disabled={submitting}
             >
-              {submitting ? 'Processing...' : (approvalAction === 'approve' ? 'Approve' : 'Reject')}
+              {submitting ? 'Processing...' : (approvalAction === 'approve' ? 'Approve & Assign' : 'Reject')}
             </Button>
           </DialogFooter>
         </DialogContent>

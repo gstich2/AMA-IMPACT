@@ -79,12 +79,26 @@ async def get_current_user_info(
 async def list_users(
     skip: int = 0,
     limit: int = 100,
+    role: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user)
 ):
-    """List all users (filtered by permissions)."""
-    # TODO: Implement permission filtering based on role
-    users = db.query(User).offset(skip).limit(limit).all()
+    """List all users (filtered by permissions and optional role)."""
+    query = db.query(User)
+    
+    # Filter by role if provided
+    if role:
+        try:
+            # Convert to lowercase to match enum values
+            role_enum = UserRole(role.lower())
+            query = query.filter(User.role == role_enum)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid role: {role}. Valid roles: admin, pm, manager, hr, beneficiary"
+            )
+    
+    users = query.offset(skip).limit(limit).all()
     return users
 
 

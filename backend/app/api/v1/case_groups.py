@@ -5,6 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_
+from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.security import get_current_active_user
@@ -12,6 +13,7 @@ from app.models.case_group import CaseGroup, CaseType
 from app.models.user import User, UserRole
 from app.models.beneficiary import Beneficiary
 from app.models.department import Department
+from app.models.audit import AuditLog, AuditAction
 from app.schemas.case_group import (
     CaseGroupCreate,
     CaseGroupUpdate,
@@ -21,6 +23,7 @@ from app.schemas.case_group import (
     CaseGroupApprove,
     CaseGroupReject,
 )
+from app.schemas.timeline import TimelineResponse, TimelineEvent, TimelineEventType
 
 router = APIRouter()
 
@@ -68,6 +71,24 @@ def create_case_group(
     db.add(case_group)
     db.commit()
     db.refresh(case_group)
+    
+    # Create audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action=AuditAction.CREATE,
+        resource_type="case_group",
+        resource_id=case_group.id,
+        new_value={
+            "case_type": case_group.case_type.value,
+            "beneficiary_id": case_group.beneficiary_id,
+            "status": case_group.status.value,
+            "priority": case_group.priority.value,
+            "approval_status": case_group.approval_status.value,
+        }
+    )
+    db.add(audit_log)
+    db.commit()
+    
     return case_group
 
 
@@ -150,7 +171,15 @@ def get_case_group(
     """
     case_group = (
         db.query(CaseGroup)
-        .options(joinedload(CaseGroup.applications))
+        .options(
+            joinedload(CaseGroup.applications),
+            joinedload(CaseGroup.beneficiary).joinedload(Beneficiary.user).joinedload(User.department),
+            joinedload(CaseGroup.beneficiary).joinedload(Beneficiary.user).joinedload(User.reports_to),
+            joinedload(CaseGroup.responsible_party).joinedload(User.department),
+            joinedload(CaseGroup.created_by_manager).joinedload(User.department),
+            joinedload(CaseGroup.approved_by_pm).joinedload(User.department),
+            joinedload(CaseGroup.law_firm),
+        )
         .filter(CaseGroup.id == case_group_id)
         .first()
     )
@@ -221,13 +250,33 @@ def update_case_group(
                 detail="Not authorized to update this case group",
             )
     
-    # Update only provided fields
+    # Capture old values for audit
+    old_values = {}
     update_data = case_group_in.dict(exclude_unset=True)
     for field, value in update_data.items():
+        old_values[field] = getattr(case_group, field).value if hasattr(getattr(case_group, field), 'value') else getattr(case_group, field)
         setattr(case_group, field, value)
     
     db.commit()
     db.refresh(case_group)
+    
+    # Create audit log if there were actual changes
+    if update_data:
+        new_values = {}
+        for field in update_data.keys():
+            new_values[field] = getattr(case_group, field).value if hasattr(getattr(case_group, field), 'value') else getattr(case_group, field)
+        
+        audit_log = AuditLog(
+            user_id=current_user.id,
+            action=AuditAction.UPDATE,
+            resource_type="case_group",
+            resource_id=case_group.id,
+            old_value=old_values,
+            new_value=new_values
+        )
+        db.add(audit_log)
+        db.commit()
+    
     return case_group
 
 
@@ -336,6 +385,7 @@ def submit_case_group_for_approval(
         )
     
     # Update approval status
+    old_status = case_group.approval_status.value
     case_group.approval_status = ApprovalStatus.PENDING_PM_APPROVAL
     if submit_data.notes:
         case_group.notes = (case_group.notes or "") + f"\n[Manager submission notes]: {submit_data.notes}"
@@ -357,6 +407,19 @@ def submit_case_group_for_approval(
     
     db.commit()
     db.refresh(case_group)
+    
+    # Create audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action=AuditAction.STATUS_CHANGED,
+        resource_type="case_group",
+        resource_id=case_group.id,
+        old_value={"approval_status": old_status},
+        new_value={"approval_status": ApprovalStatus.PENDING_PM_APPROVAL.value}
+    )
+    db.add(audit_log)
+    db.commit()
+    
     return case_group
 
 
@@ -517,6 +580,25 @@ def approve_case_group(
     
     db.commit()
     db.refresh(case_group)
+    
+    # Create audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action=AuditAction.STATUS_CHANGED,
+        resource_type="case_group",
+        resource_id=case_group.id,
+        old_value={"approval_status": "PENDING_PM_APPROVAL"},
+        new_value={
+            "approval_status": ApprovalStatus.PM_APPROVED.value,
+            "approved_by_pm_id": current_user.id,
+            "pm_approval_date": approval_date.isoformat(),
+            "assigned_hr_user_id": hr_user.id,
+            "law_firm_id": law_firm.id,
+        }
+    )
+    db.add(audit_log)
+    db.commit()
+    
     return case_group
 
 
@@ -579,9 +661,10 @@ def reject_case_group(
         )
     
     # Update approval fields
+    rejection_date = datetime.now(timezone.utc)
     case_group.approval_status = ApprovalStatus.PM_REJECTED
     case_group.approved_by_pm_id = current_user.id
-    case_group.pm_approval_date = datetime.now(timezone.utc)
+    case_group.pm_approval_date = rejection_date
     case_group.pm_approval_notes = f"REJECTED: {rejection_data.rejection_reason}"
     
     # Notify the manager who created it
@@ -597,4 +680,195 @@ def reject_case_group(
     
     db.commit()
     db.refresh(case_group)
+    
+    # Create audit log
+    audit_log = AuditLog(
+        user_id=current_user.id,
+        action=AuditAction.STATUS_CHANGED,
+        resource_type="case_group",
+        resource_id=case_group.id,
+        old_value={"approval_status": "PENDING_PM_APPROVAL"},
+        new_value={
+            "approval_status": ApprovalStatus.PM_REJECTED.value,
+            "approved_by_pm_id": current_user.id,
+            "pm_approval_date": rejection_date.isoformat(),
+            "rejection_reason": rejection_data.rejection_reason,
+        }
+    )
+    db.add(audit_log)
+    db.commit()
+    
     return case_group
+
+
+@router.get("/{case_group_id}/timeline", response_model=TimelineResponse)
+def get_case_group_timeline(
+    *,
+    db: Session = Depends(get_db),
+    case_group_id: str,
+    current_user: User = Depends(get_current_active_user),
+) -> TimelineResponse:
+    """
+    Get unified timeline for a case group.
+    
+    Combines:
+    - Audit logs (case creation, updates, approvals)
+    - Milestones from all visa applications
+    - Completed todos
+    
+    Returns events sorted by timestamp (most recent first).
+    """
+    from app.models.audit import AuditLog
+    from app.models.milestone import ApplicationMilestone
+    from app.models.todo import Todo
+    from app.models.visa import VisaApplication
+    
+    # Verify case group exists and user has access
+    case_group = db.query(CaseGroup).filter(CaseGroup.id == case_group_id).first()
+    if not case_group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Case group not found",
+        )
+    
+    # Check permissions (same as get_case_group)
+    if current_user.role == UserRole.BENEFICIARY:
+        beneficiary = db.query(Beneficiary).filter(
+            Beneficiary.user_id == current_user.id
+        ).first()
+        if not beneficiary or case_group.beneficiary_id != beneficiary.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view this timeline",
+            )
+    elif current_user.role in [UserRole.PM, UserRole.MANAGER]:
+        if case_group.beneficiary.user.contract_id != current_user.contract_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not authorized to view this timeline",
+            )
+    
+    events = []
+    
+    # 1. Get audit logs for this case group
+    audit_logs = (
+        db.query(AuditLog)
+        .filter(
+            AuditLog.resource_type == "case_group",
+            AuditLog.resource_id == case_group_id
+        )
+        .all()
+    )
+    
+    for log in audit_logs:
+        # Determine event type from action and new values
+        event_type = TimelineEventType.CASE_UPDATED
+        title = "Case Updated"
+        description = None
+        
+        if log.action.value == "create":
+            event_type = TimelineEventType.CASE_CREATED
+            title = "Case Created"
+            beneficiary_name = "Beneficiary"
+            if case_group.beneficiary:
+                beneficiary_name = f"{case_group.beneficiary.first_name or ''} {case_group.beneficiary.last_name or ''}".strip() or "Beneficiary"
+            description = f"Case group created for {beneficiary_name}"
+        elif log.action.value == "status_changed":
+            if log.new_value and "approval_status" in log.new_value:
+                approval_status = log.new_value["approval_status"]
+                if approval_status == "PENDING_PM_APPROVAL":
+                    event_type = TimelineEventType.SUBMITTED_FOR_APPROVAL
+                    title = "Submitted for PM Approval"
+                    description = "Case submitted to PM for review"
+                elif approval_status == "PM_APPROVED":
+                    event_type = TimelineEventType.APPROVED
+                    title = "PM Approved Case"
+                    hr_user_id = log.new_value.get("assigned_hr_user_id")
+                    law_firm_id = log.new_value.get("law_firm_id")
+                    if hr_user_id:
+                        hr_user = db.query(User).filter(User.id == hr_user_id).first()
+                        description = f"Case approved and assigned to {hr_user.full_name if hr_user else 'HR'}"
+                elif approval_status == "PM_REJECTED":
+                    event_type = TimelineEventType.REJECTED
+                    title = "PM Rejected Case"
+                    reason = log.new_value.get("rejection_reason", "No reason provided")
+                    description = f"Reason: {reason}"
+            else:
+                event_type = TimelineEventType.STATUS_CHANGED
+                title = "Status Changed"
+        
+        events.append(TimelineEvent(
+            id=log.id,
+            event_type=event_type,
+            timestamp=log.created_at,
+            user_id=log.user_id,
+            user_name=log.user.full_name if log.user else None,
+            user_email=log.user.email if log.user else None,
+            title=title,
+            description=description,
+            old_values=log.old_value,
+            new_values=log.new_value,
+        ))
+    
+    # 2. Get milestones from all visa applications in this case group
+    visa_app_ids = [app.id for app in case_group.applications]
+    if visa_app_ids:
+        milestones = (
+            db.query(ApplicationMilestone)
+            .filter(ApplicationMilestone.visa_application_id.in_(visa_app_ids))
+            .all()
+        )
+        
+        for milestone in milestones:
+            # Get visa application to show which application this milestone belongs to
+            visa_app = db.query(VisaApplication).filter(VisaApplication.id == milestone.visa_application_id).first()
+            
+            events.append(TimelineEvent(
+                id=milestone.id,
+                event_type=TimelineEventType.MILESTONE,
+                timestamp=datetime.combine(milestone.milestone_date, datetime.min.time()),
+                user_id=milestone.created_by,
+                user_name=milestone.creator.full_name if milestone.creator else None,
+                user_email=milestone.creator.email if milestone.creator else None,
+                title=f"Milestone: {milestone.milestone_type.value.replace('_', ' ').title()}",
+                description=milestone.description or (milestone.title if milestone.title else None),
+                milestone_type=milestone.milestone_type.value,
+                milestone_date=milestone.milestone_date,
+                details={
+                    "visa_application_type": visa_app.visa_type.value if visa_app else None,
+                    "petition_type": visa_app.petition_type if visa_app else None,
+                }
+            ))
+    
+    # 3. Get completed todos for this case group
+    todos = (
+        db.query(Todo)
+        .filter(
+            Todo.case_group_id == case_group_id,
+            Todo.status == "DONE"  # Only completed todos
+        )
+        .all()
+    )
+    
+    for todo in todos:
+        events.append(TimelineEvent(
+            id=todo.id,
+            event_type=TimelineEventType.TODO_COMPLETED,
+            timestamp=todo.completed_at if todo.completed_at else todo.updated_at,
+            user_id=todo.assigned_to_user_id,
+            user_name=todo.assigned_to_user.full_name if todo.assigned_to_user else None,
+            user_email=todo.assigned_to_user.email if todo.assigned_to_user else None,
+            title=f"Completed: {todo.title}",
+            description=todo.description,
+            todo_title=todo.title,
+            todo_status=todo.status.value,
+        ))
+    
+    # Sort all events by timestamp (most recent first)
+    events.sort(key=lambda x: x.timestamp, reverse=True)
+    
+    return TimelineResponse(
+        case_group_id=case_group_id,
+        total_events=len(events),
+        events=events
+    )

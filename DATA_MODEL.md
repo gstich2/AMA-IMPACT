@@ -167,7 +167,7 @@ class VisaApplication:
 
 ### 6. Case Group Model (`case_groups`)
 
-**Purpose**: Group related visa applications in immigration pathways
+**Purpose**: Group related visa applications in immigration pathways with PM approval workflow
 
 ```python
 class CaseGroup:
@@ -176,6 +176,12 @@ class CaseGroup:
     description: str                 # Group description
     beneficiary_id: int              # FK to beneficiaries
     status: str                      # PLANNING, ACTIVE, COMPLETED, CANCELLED
+    approval_status: str             # DRAFT, PENDING_PM_APPROVAL, APPROVED, REJECTED
+    assigned_hr_user_id: int         # FK to users (nullable)
+    law_firm_id: int                 # FK to law_firms (nullable)
+    approved_by_pm_id: int           # FK to users (nullable)
+    approval_notes: str              # PM approval comments (nullable)
+    rejection_reason: str            # PM rejection reason (nullable)
     created_at: datetime
     updated_at: datetime
 ```
@@ -184,14 +190,27 @@ class CaseGroup:
 - **Beneficiary**: Many-to-one (case group for one beneficiary)
 - **Visa Applications**: One-to-many (group contains multiple visas)
 - **Todos**: One-to-many (group can have tasks)
+- **Law Firm**: Many-to-one (case assigned to law firm)
+- **Approved By PM**: Many-to-one (PM who approved case)
+- **Assigned HR**: Many-to-one (HR user assigned to manage case)
+
+**Approval Workflow:**
+1. DRAFT → PENDING_PM_APPROVAL (via `/case-groups/{id}/submit-for-approval`)
+2. PENDING_PM_APPROVAL → APPROVED (via `/case-groups/{id}/approve`, assigns HR + law firm)
+3. PENDING_PM_APPROVAL → REJECTED (via `/case-groups/{id}/reject`, with rejection reason)
+
+**Timeline Integration:**
+All case group changes are logged in audit_logs and displayed via `/case-groups/{id}/timeline` endpoint combining audit logs, application milestones, and completed todos.
 
 **Example Immigration Pathway:**
 ```
-Case Group: "Software Engineer Immigration"
+Case Group: "Software Engineer Immigration" (APPROVED by PM)
 ├── H1B Application (2023-2026)
 ├── PERM Labor Certification (2024)
 ├── I-140 Petition (2025)
 └── I-485 Adjustment of Status (2025)
+Assigned to: HR Manager (Jane Doe)
+Law Firm: Smith & Associates Immigration
 ```
 
 ### 7. Todo Model (`todos`)
@@ -302,14 +321,14 @@ class Notification:
 
 ### 11. Audit Log Model (`audit_logs`)
 
-**Purpose**: Comprehensive system activity tracking
+**Purpose**: Comprehensive system activity tracking for compliance and history
 
 ```python
 class AuditLog:
     id: int                          # Primary key
     user_id: int                     # FK to users (nullable for system actions)
     action: str                      # CREATE, UPDATE, DELETE, LOGIN, LOGIN_FAILED, EXPORT, VIEW
-    resource_type: str               # visa_application, user, beneficiary, etc.
+    resource_type: str               # visa_application, user, beneficiary, case_group, etc.
     resource_id: int                 # ID of affected resource (nullable)
     old_values: dict                 # Previous values (JSON, nullable)
     new_values: dict                 # New values (JSON, nullable)
@@ -322,6 +341,20 @@ class AuditLog:
 
 **Relationships:**
 - **User**: Many-to-one (audit entry for user action)
+
+**Timeline Integration:**
+Case group audit logs are combined with application milestones and completed todos to provide a unified timeline via `/case-groups/{id}/timeline` endpoint. This gives a complete chronological view of all case activity including:
+- Case creation, updates, submissions, approvals, rejections
+- Visa application milestone events (filed, approved, denied)
+- Completed todo tasks
+
+**Resource Types:**
+- `case_group`: Case group operations (create, update, submit, approve, reject)
+- `visa_application`: Visa application changes
+- `user`: User management actions
+- `beneficiary`: Beneficiary profile changes
+- `todo`: Task updates
+- `contract`: Contract modifications
 
 **Audit Actions:**
 - `CREATE`: Resource creation
