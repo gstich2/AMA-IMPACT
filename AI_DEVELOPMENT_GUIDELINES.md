@@ -50,13 +50,21 @@ const mockUsers = [
    - `backend/scripts/fixtures/seed_development_data.py`
    - `backend/scripts/fixtures/seed_law_firms.py`
 
-2. **Then reset database:**
+2. **BEFORE modifying backend scripts:**
+   - ✅ Read the entire file first
+   - ✅ Understand existing data structure
+   - ✅ Confirm changes won't break existing data
+   - ✅ Preserve NASA Ames structure (13 departments)
+   - ✅ Ask user to confirm if unsure about changes
+   - ❌ NEVER blindly modify fixtures without understanding context
+
+3. **Then reset database:**
    ```bash
    cd backend
    python scripts/setup_dev_environment.py
    ```
 
-3. **Frontend fetches real data:**
+4. **Frontend fetches real data:**
    ```typescript
    const data = await someAPI.getAll()
    // Use actual API responses, never hardcoded data

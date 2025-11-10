@@ -32,8 +32,11 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertTriangle,
-  FileText
+  FileText,
+  X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react'
 
 interface CaseGroup {
@@ -63,18 +66,24 @@ interface CaseGroup {
   attorney_portal_link?: string
 }
 
+type SortableColumn = 'case_number' | 'beneficiary' | 'case_type' | 'status' | 'approval_status' | 'priority' | 'case_started_date' | 'target_completion_date'
+
 export default function CasesPage() {
   const router = useRouter()
   const [caseGroups, setCaseGroups] = useState<CaseGroup[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUser, setCurrentUser] = useState<any>(null)
   
-  // Filters
+  // Filters - now using arrays for multi-select
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [caseTypeFilter, setCaseTypeFilter] = useState<string>('all')
-  const [approvalStatusFilter, setApprovalStatusFilter] = useState<string>('all')
-  const [priorityFilter, setPriorityFilter] = useState<string>('all')
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([])
+  const [selectedCaseTypes, setSelectedCaseTypes] = useState<string[]>([])
+  const [selectedApprovalStatuses, setSelectedApprovalStatuses] = useState<string[]>([])
+  const [selectedPriorities, setSelectedPriorities] = useState<string[]>([])
+  
+  // Sorting
+  const [sortColumn, setSortColumn] = useState<SortableColumn | null>(null)
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   useEffect(() => {
     loadData()
@@ -98,6 +107,31 @@ export default function CasesPage() {
     }
   }
 
+  // Add/remove filter
+  const toggleFilter = (filterArray: string[], value: string, setter: (arr: string[]) => void) => {
+    if (filterArray.includes(value)) {
+      setter(filterArray.filter(v => v !== value))
+    } else {
+      setter([...filterArray, value])
+    }
+  }
+
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setSelectedStatuses([])
+    setSelectedCaseTypes([])
+    setSelectedApprovalStatuses([])
+    setSelectedPriorities([])
+  }
+
+  const hasActiveFilters = () => {
+    return searchTerm !== '' || 
+           selectedStatuses.length > 0 || 
+           selectedCaseTypes.length > 0 || 
+           selectedApprovalStatuses.length > 0 || 
+           selectedPriorities.length > 0
+  }
+
   // Filter case groups
   const filteredCaseGroups = caseGroups.filter((caseGroup) => {
     const matchesSearch = 
@@ -107,13 +141,86 @@ export default function CasesPage() {
       caseGroup.beneficiary?.last_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       caseGroup.beneficiary?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesStatus = statusFilter === 'all' || caseGroup.status === statusFilter
-    const matchesCaseType = caseTypeFilter === 'all' || caseGroup.case_type === caseTypeFilter
-    const matchesApprovalStatus = approvalStatusFilter === 'all' || caseGroup.approval_status === approvalStatusFilter
-    const matchesPriority = priorityFilter === 'all' || caseGroup.priority === priorityFilter
+    const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(caseGroup.status)
+    const matchesCaseType = selectedCaseTypes.length === 0 || selectedCaseTypes.includes(caseGroup.case_type)
+    const matchesApprovalStatus = selectedApprovalStatuses.length === 0 || selectedApprovalStatuses.includes(caseGroup.approval_status)
+    const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(caseGroup.priority)
     
     return matchesSearch && matchesStatus && matchesCaseType && matchesApprovalStatus && matchesPriority
   })
+
+  // Sort case groups
+  const sortedCaseGroups = [...filteredCaseGroups].sort((a, b) => {
+    if (!sortColumn) return 0
+    
+    let aValue: any
+    let bValue: any
+    
+    switch (sortColumn) {
+      case 'case_number':
+        aValue = a.case_number || ''
+        bValue = b.case_number || ''
+        break
+      case 'beneficiary':
+        aValue = a.beneficiary ? `${a.beneficiary.first_name} ${a.beneficiary.last_name}` : ''
+        bValue = b.beneficiary ? `${b.beneficiary.first_name} ${b.beneficiary.last_name}` : ''
+        break
+      case 'case_type':
+        aValue = a.case_type || ''
+        bValue = b.case_type || ''
+        break
+      case 'status':
+        aValue = a.status || ''
+        bValue = b.status || ''
+        break
+      case 'approval_status':
+        aValue = a.approval_status || ''
+        bValue = b.approval_status || ''
+        break
+      case 'priority':
+        aValue = a.priority || ''
+        bValue = b.priority || ''
+        break
+      case 'case_started_date':
+        aValue = a.case_started_date ? new Date(a.case_started_date).getTime() : 0
+        bValue = b.case_started_date ? new Date(b.case_started_date).getTime() : 0
+        break
+      case 'target_completion_date':
+        aValue = a.target_completion_date ? new Date(a.target_completion_date).getTime() : 0
+        bValue = b.target_completion_date ? new Date(b.target_completion_date).getTime() : 0
+        break
+      default:
+        return 0
+    }
+    
+    if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
+    if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
+    return 0
+  })
+
+  const handleSort = (column: SortableColumn) => {
+    if (sortColumn === column) {
+      if (sortDirection === 'asc') {
+        setSortDirection('desc')
+      } else {
+        setSortColumn(null)
+        setSortDirection('asc')
+      }
+    } else {
+      setSortColumn(column)
+      setSortDirection('asc')
+    }
+  }
+
+  const getSortIcon = (column: SortableColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="h-4 w-4 ml-1 opacity-50" />
+    }
+    if (sortDirection === 'asc') {
+      return <ArrowUp className="h-4 w-4 ml-1" />
+    }
+    return <ArrowDown className="h-4 w-4 ml-1" />
+  }
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { variant: any; label: string }> = {
@@ -213,6 +320,12 @@ export default function CasesPage() {
               <p className="text-gray-600">Immigration case management and workflow tracking</p>
             </div>
           </div>
+          {canCreateCase() && (
+            <Button onClick={() => router.push('/cases/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Case
+            </Button>
+          )}
         </div>
 
         {/* Filters and Actions */}
@@ -223,36 +336,34 @@ export default function CasesPage() {
                 <Filter className="h-5 w-5 text-muted-foreground" />
                 <CardTitle>Filters</CardTitle>
               </div>
-              {canCreateCase() && (
-                <Button onClick={() => router.push('/cases/new')}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  New Case
+              {hasActiveFilters() && (
+                <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                  <X className="h-4 w-4 mr-2" />
+                  Clear All Filters
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {/* Search */}
-              <div className="lg:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search by case number, employee name, or email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by case number, employee name, or email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
 
+            {/* Filter Dropdowns */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Statuses" />
+              <Select value="" onValueChange={(value) => toggleFilter(selectedStatuses, value, setSelectedStatuses)}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Add Status Filter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="PLANNING">Planning</SelectItem>
                   <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                   <SelectItem value="COMPLETED">Completed</SelectItem>
@@ -262,12 +373,11 @@ export default function CasesPage() {
               </Select>
 
               {/* Case Type Filter */}
-              <Select value={caseTypeFilter} onValueChange={setCaseTypeFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Case Types" />
+              <Select value="" onValueChange={(value) => toggleFilter(selectedCaseTypes, value, setSelectedCaseTypes)}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Add Case Type Filter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Case Types</SelectItem>
                   <SelectItem value="H1B">H1B</SelectItem>
                   <SelectItem value="H1B_TRANSFER">H1B Transfer</SelectItem>
                   <SelectItem value="EB1">EB-1</SelectItem>
@@ -281,72 +391,86 @@ export default function CasesPage() {
               </Select>
 
               {/* Approval Status Filter */}
-              <Select value={approvalStatusFilter} onValueChange={setApprovalStatusFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All Approval Statuses" />
+              <Select value="" onValueChange={(value) => toggleFilter(selectedApprovalStatuses, value, setSelectedApprovalStatuses)}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Add Approval Filter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Approval Statuses</SelectItem>
                   <SelectItem value="DRAFT">Draft</SelectItem>
                   <SelectItem value="PENDING_PM_APPROVAL">Pending Approval</SelectItem>
                   <SelectItem value="PM_APPROVED">Approved</SelectItem>
                   <SelectItem value="PM_REJECTED">Rejected</SelectItem>
                 </SelectContent>
               </Select>
+
+              {/* Priority Filter */}
+              <Select value="" onValueChange={(value) => toggleFilter(selectedPriorities, value, setSelectedPriorities)}>
+                <SelectTrigger className="bg-white">
+                  <SelectValue placeholder="Add Priority Filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CRITICAL">Critical</SelectItem>
+                  <SelectItem value="URGENT">Urgent</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="LOW">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Priority Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Priority:</span>
-              <div className="flex gap-2">
-                <Button
-                  variant={priorityFilter === 'all' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPriorityFilter('all')}
-                >
-                  All
-                </Button>
-                <Button
-                  variant={priorityFilter === 'CRITICAL' ? 'destructive' : 'outline'}
-                  size="sm"
-                  onClick={() => setPriorityFilter('CRITICAL')}
-                >
-                  Critical
-                </Button>
-                <Button
-                  variant={priorityFilter === 'URGENT' ? 'destructive' : 'outline'}
-                  size="sm"
-                  onClick={() => setPriorityFilter('URGENT')}
-                >
-                  Urgent
-                </Button>
-                <Button
-                  variant={priorityFilter === 'HIGH' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPriorityFilter('HIGH')}
-                >
-                  High
-                </Button>
-                <Button
-                  variant={priorityFilter === 'MEDIUM' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setPriorityFilter('MEDIUM')}
-                >
-                  Medium
-                </Button>
-                <Button
-                  variant={priorityFilter === 'LOW' ? 'outline' : 'outline'}
-                  size="sm"
-                  onClick={() => setPriorityFilter('LOW')}
-                >
-                  Low
-                </Button>
+            {/* Active Filters as Buttons */}
+            {hasActiveFilters() && (
+              <div className="flex flex-wrap gap-2">
+                {selectedStatuses.map(status => (
+                  <Button
+                    key={status}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => toggleFilter(selectedStatuses, status, setSelectedStatuses)}
+                  >
+                    Status: {getStatusBadge(status).props.children}
+                    <X className="h-3 w-3 ml-2" />
+                  </Button>
+                ))}
+                {selectedCaseTypes.map(type => (
+                  <Button
+                    key={type}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => toggleFilter(selectedCaseTypes, type, setSelectedCaseTypes)}
+                  >
+                    Type: {getCaseTypeLabel(type)}
+                    <X className="h-3 w-3 ml-2" />
+                  </Button>
+                ))}
+                {selectedApprovalStatuses.map(status => (
+                  <Button
+                    key={status}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => toggleFilter(selectedApprovalStatuses, status, setSelectedApprovalStatuses)}
+                  >
+                    Approval: {getApprovalStatusBadge(status).props.children}
+                    <X className="h-3 w-3 ml-2" />
+                  </Button>
+                ))}
+                {selectedPriorities.map(priority => (
+                  <Button
+                    key={priority}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => toggleFilter(selectedPriorities, priority, setSelectedPriorities)}
+                  >
+                    Priority: {getPriorityBadge(priority).props.children}
+                    <X className="h-3 w-3 ml-2" />
+                  </Button>
+                ))}
               </div>
-            </div>
+            )}
 
             {/* Results Count */}
             <div className="text-sm text-muted-foreground">
-              Showing {filteredCaseGroups.length} of {caseGroups.length} cases
+              Showing {sortedCaseGroups.length} of {caseGroups.length} cases
             </div>
           </CardContent>
         </Card>
@@ -356,7 +480,7 @@ export default function CasesPage() {
           <CardHeader>
             <CardTitle>Immigration Cases</CardTitle>
             <CardDescription>
-              View and manage all immigration cases
+              View and manage all immigration cases. Click column headers to sort.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -364,16 +488,16 @@ export default function CasesPage() {
               <div className="flex items-center justify-center py-8">
                 <div className="text-muted-foreground">Loading cases...</div>
               </div>
-            ) : filteredCaseGroups.length === 0 ? (
+            ) : sortedCaseGroups.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No cases found</h3>
                 <p className="text-muted-foreground mb-4">
-                  {searchTerm || statusFilter !== 'all' || caseTypeFilter !== 'all' || approvalStatusFilter !== 'all'
+                  {hasActiveFilters()
                     ? 'Try adjusting your filters'
                     : 'Get started by creating your first case'}
                 </p>
-                {canCreateCase() && (
+                {canCreateCase() && !hasActiveFilters() && (
                   <Button onClick={() => router.push('/cases/new')}>
                     <Plus className="h-4 w-4 mr-2" />
                     Create Case
@@ -385,20 +509,60 @@ export default function CasesPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Case Number</TableHead>
-                      <TableHead>Employee</TableHead>
-                      <TableHead>Case Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Approval</TableHead>
-                      <TableHead>Priority</TableHead>
-                      <TableHead>Started</TableHead>
-                      <TableHead>Target Date</TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('case_number')}>
+                        <div className="flex items-center">
+                          Case Number
+                          {getSortIcon('case_number')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('beneficiary')}>
+                        <div className="flex items-center">
+                          Employee
+                          {getSortIcon('beneficiary')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('case_type')}>
+                        <div className="flex items-center">
+                          Case Type
+                          {getSortIcon('case_type')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('status')}>
+                        <div className="flex items-center">
+                          Status
+                          {getSortIcon('status')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('approval_status')}>
+                        <div className="flex items-center">
+                          Approval
+                          {getSortIcon('approval_status')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('priority')}>
+                        <div className="flex items-center">
+                          Priority
+                          {getSortIcon('priority')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('case_started_date')}>
+                        <div className="flex items-center">
+                          Started
+                          {getSortIcon('case_started_date')}
+                        </div>
+                      </TableHead>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('target_completion_date')}>
+                        <div className="flex items-center">
+                          Target Date
+                          {getSortIcon('target_completion_date')}
+                        </div>
+                      </TableHead>
                       <TableHead>Manager</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredCaseGroups.map((caseGroup) => (
+                    {sortedCaseGroups.map((caseGroup) => (
                       <TableRow 
                         key={caseGroup.id}
                         className="cursor-pointer hover:bg-muted/50"
