@@ -121,7 +121,7 @@ Loads comprehensive ASSESS contract data with real employee visa cases (developm
 **What it does:**
 - Creates ASSESS contract with full NASA Ames organizational structure (13 departments)
 - **NASA Ames Structure:**
-  - **TS (Entry Systems and Technology Division)** - David Chen (Manager)
+  - **TS (Entry Systems and Technology Division)** - Dave Cornelius / PM (Manager)
     - TSM (Thermal Protection Materials Branch) - Arnaud Borner
     - TSA (Aerothermodynamics Branch) - Bhaskaran Rathakrishnan
     - TSF (Thermo-Physics Facilities Branch) - No manager
@@ -134,15 +134,11 @@ Loads comprehensive ASSESS contract data with real employee visa cases (developm
     - AA (Systems Analysis Office) - Blake Hannah (dual role)
   - **Y (Aeroflightdynamics Directorate - US Army)** - Parent department
     - YA (Computational Aeromechanics Tech Area) - Shirzad Hoseinverdy
-- Creates 11 employees including PM and 6 Tech Leads
-- Creates 7 visa applications in various stages (TN, H1B, EB2-NIW, EB-1B, I-485)
-- Creates law firm (Fragomen) with 2 attorneys
-- Creates sample dependent
-- All with realistic data matching actual ASSESS team
+- Creates PM user and 6 branch managers
+- Beneficiaries, case groups, and visa applications are seeded separately (see below)
 
 **Test Accounts:**
-- `pm.assess@ama-impact.com` - Project Manager (Dave Cornelius)
-- `techlead.assess@ama-impact.com` - TS Division Manager (David Chen)
+- `pm.assess@ama-impact.com` - Project Manager (Dave Cornelius) - manages TS division
 - `bhaskaran.rathakrishnan@ama-inc.com` - TSA Manager
 - `arnaud.borner@ama-inc.com` - TSM Manager
 - `blake.Hannah@ama-inc.com` - TSS & AA Manager (dual role)

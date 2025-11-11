@@ -57,7 +57,7 @@ Creates:
 - **13 departments in complete NASA Ames organizational hierarchy:**
   - **⚠️ CRITICAL: This is the COMPLETE structure. DO NOT SIMPLIFY.**
   
-  **L1: Entry Systems and Technology Division (TS)** - David Chen (Manager)
+  **L1: Entry Systems and Technology Division (TS)** - Dave Cornelius / PM (Manager)
     - L2: TSM (Thermal Protection Materials Branch) - Arnaud Borner
     - L2: TSA (Aerothermodynamics Branch) - Bhaskaran Rathakrishnan
     - L2: TSF (Thermo-Physics Facilities Branch) - No manager
@@ -74,9 +74,8 @@ Creates:
   **L1: Aeroflightdynamics Directorate (Y)** - US Army, Parent department
     - L2: YA (Computational Aeromechanics Tech Area) - Shirzad Hoseinverdy
 
-- **Users (8 total):**
-  - PM: pm.assess@ama-impact.com (Dave Cornelius)
-  - Tech Lead/TS Manager: techlead.assess@ama-impact.com (David Chen)
+- **Users (7 total):**
+  - PM: pm.assess@ama-impact.com (Dave Cornelius) - also manages TS division
   - **6 Department Managers:**
     - bhaskaran.rathakrishnan@ama-inc.com (TSA)
     - arnaud.borner@ama-inc.com (TSM)
@@ -88,6 +87,24 @@ Creates:
 - All passwords: `TempPassword123!` with `force_password_change=True`
 
 **Note:** Blake Hannah and Gerrit-Daniel Stich each manage two departments (dual roles).
+
+### ASSESS Beneficiaries (Realistic Fixtures)
+
+Three fixture files create realistic beneficiary data:
+
+```bash
+python scripts/fixtures/contracts/seed_assess_beneficiary_users.py
+python scripts/fixtures/contracts/seed_assess_case_groups.py
+python scripts/fixtures/contracts/seed_assess_visa_apps.py
+```
+
+Creates:
+- **11 ASSESS beneficiaries** with real employee data
+- **11 case groups** (2 completed, 5 active, 2 pending PM, 2 draft)
+- **11 visa applications** with 28 milestones showing realistic progression
+- Passwords: `Dev123!` (no password change required for testing)
+
+Beneficiaries include: Gerrit-Daniel Stich, Brandon Lowe, David Craig Penner, Timothy Chau, Luis Fernandes, Kiran Ravikumar, Victor Sousa, David Garcia Perez, Tove Aagen, Jacob Friedrichson, Georgios Bellas-Chatzigeorgis
 
 ### RSES Contract
 ```bash

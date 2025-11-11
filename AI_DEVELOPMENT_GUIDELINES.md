@@ -102,7 +102,7 @@ const mockUsers = [
 **13 Departments Total (4 L1 + 9 L2):**
 
 #### L1: Entry Systems and Technology Division (TS)
-- Manager: David Chen (techlead.assess@ama-impact.com)
+- Manager: Dave Cornelius / PM (pm.assess@ama-impact.com)
 - **L2: TSM** - Thermal Protection Materials Branch
   - Manager: Arnaud Borner (arnaud.borner@ama-inc.com)
 - **L2: TSA** - Aerothermodynamics Branch
@@ -429,7 +429,16 @@ npm install
 
 ## 13. Key Passwords for Testing
 
-**All manager accounts:**
+**PM account:**
+- Email: `pm.assess@ama-impact.com`
+- Password: `TempPassword123!`
+- force_password_change: `True` (will prompt on first login)
+
+**All ASSESS beneficiaries:**
+- Password: `Dev123!`
+- force_password_change: `False` (for testing convenience)
+
+**All other manager accounts:**
 - Password: `TempPassword123!`
 - force_password_change: `True` (will prompt on first login)
 
@@ -437,7 +446,6 @@ npm install
 - Password: `Ben123!` (beneficiaries)
 - Password: `HR123!` (hr@ama-impact.com)
 - Password: `PM123!` (pm@ama-impact.com)
-- Password: `Tech123!` (techlead@ama-impact.com)
 
 **Admin:**
 - Email: `admin@ama-impact.com`

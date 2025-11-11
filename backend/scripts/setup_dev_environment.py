@@ -60,7 +60,10 @@ def setup_dev_environment():
         (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess.py", "Seed ASSESS Contract"),
         (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_rses.py", "Seed RSES Contract"),
         (SCRIPTS_DIR / "fixtures" / "seed_law_firms.py", "Seed Law Firms"),
-        (SCRIPTS_DIR / "fixtures" / "seed_development_data.py", "Seed Development Data"),
+        (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess_beneficiary_users.py", "Seed ASSESS Beneficiary Users"),
+        (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess_case_groups.py", "Seed ASSESS Case Groups"),
+        (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess_visa_apps.py", "Seed ASSESS Visa Applications"),
+        (SCRIPTS_DIR / "fixtures" / "seed_development_data.py", "Seed Development Test Data"),
     ]
     
     for script_path, description in scripts:
@@ -74,18 +77,21 @@ def setup_dev_environment():
     print("="*60)
     print("\nYour database is ready with:")
     print("  • Admin user: admin@ama-impact.com / Admin123!")
+    print("  • PM user: pm.assess@ama-impact.com / TempPassword123!")
     print("  • ASSESS & RSES contracts")
     print("  • 14 visa types")
     print("  • 3 law firms")
-    print("  • 11 departments (9 ASSESS + 2 RSES)")
-    print("  • 6 users (HR, PM, Manager, 4 Beneficiaries)")
-    print("  • 2 case groups and 7 visa applications")
-    print("  • Sample dependents")
+    print("  • 13 ASSESS departments (4 L1 + 9 L2) + 2 RSES departments")
+    print("  • 11 ASSESS beneficiaries with realistic employee data")
+    print("  • 11 case groups (2 completed, 5 active, 2 pending PM, 2 draft)")
+    print("  • 11 visa applications with 28 milestones")
+    print("  • Additional test users and data")
     
     print("\nNext steps:")
-    print("  1. Start server: python -m uvicorn app.main:app --reload --port 8001")
-    print("  2. Access API docs: http://localhost:8001/docs")
-    print("  3. Login with any test user (see output above)")
+    print("  1. Start server: cd backend && uvicorn app.main:app --reload --port 7001")
+    print("  2. Access API docs: http://localhost:7001/docs")
+    print("  3. Login as PM: pm.assess@ama-impact.com / TempPassword123!")
+    print("  4. View cases: All ASSESS beneficiaries have visa cases with milestones")
     
     return True
 

@@ -2,8 +2,8 @@
 
 **⚠️ CRITICAL: This is the COMPLETE NASA Ames organizational hierarchy. DO NOT SIMPLIFY.**
 
-Last Updated: 2025-11-10  
-Database: Restored and committed to git  
+Last Updated: 2025-11-11  
+Database: Updated with realistic beneficiary fixtures  
 Fixture: `backend/scripts/fixtures/contracts/seed_assess.py`
 
 ---
@@ -11,7 +11,7 @@ Fixture: `backend/scripts/fixtures/contracts/seed_assess.py`
 ## Complete Structure (13 Departments)
 
 ### L1: Entry Systems and Technology Division (TS)
-**Manager:** David Chen (techlead.assess@ama-impact.com)
+**Manager:** Dave Cornelius (PM) - pm.assess@ama-impact.com
 
 - **L2: TSM** - Thermal Protection Materials Branch  
   **Manager:** Arnaud Borner (arnaud.borner@ama-inc.com)
@@ -61,7 +61,7 @@ Fixture: `backend/scripts/fixtures/contracts/seed_assess.py`
 
 ### Department Managers (6 total)
 
-1. **David Chen** - TS Division Manager (techlead.assess@ama-impact.com)
+1. **Dave Cornelius** - PM and TS Division Manager (pm.assess@ama-impact.com)
 2. **Arnaud Borner** - TSM Manager (arnaud.borner@ama-inc.com)
 3. **Bhaskaran Rathakrishnan** - TSA Manager (bhaskaran.rathakrishnan@ama-inc.com)
 4. **Blake Lively** - TSS & AA Manager (blake.lively@ama-inc.com) - **DUAL ROLE**
@@ -69,7 +69,8 @@ Fixture: `backend/scripts/fixtures/contracts/seed_assess.py`
 6. **Gerrit-Daniel Stich** - TNA & AV Manager (gerrit-daniel.stich@ama-inc.com) - **DUAL ROLE**
 7. **Shirzad Hoseinverdy** - YA Manager (shirzad.hoseinverdy@ama-inc.com)
 
-**All passwords:** `TempPassword123!` with `force_password_change=True`
+**PM Password:** `TempPassword123!` with `force_password_change=True`  
+**All other passwords:** `Dev123!` (beneficiaries) or `TempPassword123!` (managers)
 
 ### Dual Role Managers
 
@@ -115,6 +116,15 @@ Expected output: 13 rows (4 L1 + 9 L2)
 ---
 
 ## Historical Notes
+
+**2025-11-11:** Updated organizational structure and added realistic fixture data.
+- Removed David Chen (tech lead) - role doesn't exist in reality
+- Dave Cornelius (PM) now manages TS division directly
+- All 6 branch managers report directly to PM
+- Added 11 ASSESS beneficiaries with realistic employee data
+- Created 11 case groups with proper workflow statuses
+- Created 11 visa applications with 28 milestones
+- Split fixtures into 3 files for maintainability
 
 **2025-11-10:** Complete structure restored from user specifications.
 - Previously had only 9 departments (missing TN, A, Y parents and AA, YA children)

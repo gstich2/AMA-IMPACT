@@ -335,30 +335,16 @@ def seed_assess():
         # Set PM as contract manager
         assess_contract.manager_user_id = pm_user.id
         
-        print(f"   ✓ Created PM: {pm_user.email} (password change required)")
+        # Set PM as TS manager (division-level) - L1 departments don't need separate managers
+        dept_ts.manager_id = pm_user.id
+        
+        print(f"   ✓ Created PM: {pm_user.email} (also manages TS division)")
         
         # ============================================================
-        # 5. CREATE TECH LEAD / TS MANAGER (PRODUCTION USER)
+        # 5. UPDATE MANAGER REPORTING STRUCTURE
         # ============================================================
         
-        tech_lead = User(
-            email='techlead.assess@ama-impact.com',
-            hashed_password=get_password_hash('TempPassword123!'),
-            full_name='David Chen',
-            role=UserRole.MANAGER,
-            contract_id=assess_contract.id,
-            department_id=dept_ts.id,
-            reports_to_id=pm_user.id,
-            is_active=True,
-            force_password_change=True  # ⭐ PRODUCTION: Must change password
-        )
-        db.add(tech_lead)
-        db.flush()
-        
-        # Set tech lead as TS manager (division-level)
-        dept_ts.manager_id = tech_lead.id
-        
-        # Update all managers to report to PM
+        # All branch managers report directly to PM
         manager_tsa.reports_to_id = pm_user.id
         manager_tsm.reports_to_id = pm_user.id
         manager_blake.reports_to_id = pm_user.id
@@ -366,7 +352,7 @@ def seed_assess():
         manager_gerrit.reports_to_id = pm_user.id
         manager_ya.reports_to_id = pm_user.id
         
-        print(f"   ✓ Created Tech Lead/Manager: {tech_lead.email} (TS Division Manager)")
+        print(f"   ✓ All branch managers report to PM (Dave Cornelius)")
         
         # ============================================================
         # COMMIT ALL
@@ -377,14 +363,13 @@ def seed_assess():
         print(f"\n✅ ASSESS contract seeded successfully!")
         print(f"   Contract: {assess_contract.code}")
         print(f"   Departments: 13 (4 L1 parents + 9 L2 children)")
-        print(f"     TS → TSM, TSA, TSF, TSS")
+        print(f"     TS → TSM, TSA, TSF, TSS (managed by PM)")
         print(f"     TN → TNA, TNP")
         print(f"     A → AV, AA")
         print(f"     Y → YA")
-        print(f"   Users: 8 total")
-        print(f"     - 1 PM (Dave Cornelius)")
-        print(f"     - 1 Tech Lead/TS Manager (David Chen)")
-        print(f"     - 6 Department Managers:")
+        print(f"   Users: 7 total")
+        print(f"     - 1 PM (Dave Cornelius) - also manages TS division")
+        print(f"     - 6 Branch Managers:")
         print(f"       * TSA: Bhaskaran Rathakrishnan")
         print(f"       * TSM: Arnaud Borner")
         print(f"       * TSS, AA: Blake Hannah (dual role)")
