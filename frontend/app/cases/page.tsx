@@ -178,7 +178,7 @@ export default function CasesPage() {
       if (!caseGroup.target_completion_date) return false
       const now = new Date()
       const targetDate = new Date(caseGroup.target_completion_date)
-      return targetDate < now && !['COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(caseGroup.status)
+      return targetDate < now && !['APPROVED', 'COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(caseGroup.status)
     })()
     
     // Date-based filtering for Due Soon (next 7 days)
@@ -282,17 +282,48 @@ export default function CasesPage() {
   }
 
   const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { icon?: any; variant: any; label: string }> = {
-      PLANNING: { icon: FileText, variant: 'secondary', label: 'Planning' },
-      IN_PROGRESS: { icon: Clock, variant: 'default', label: 'In Progress' },
-      COMPLETED: { icon: CheckCircle, variant: 'success', label: 'Completed' },
-      ON_HOLD: { icon: AlertTriangle, variant: 'warning', label: 'On Hold' },
-      CANCELLED: { icon: XCircle, variant: 'destructive', label: 'Cancelled' },
+    const statusConfig: Record<string, { icon?: any; variant: any; label: string; colorClass?: string }> = {
+      PLANNING: { 
+        icon: FileText, 
+        variant: 'outline', 
+        label: 'Planning',
+        colorClass: 'border-blue-500 text-blue-700 bg-blue-50'
+      },
+      IN_PROGRESS: { 
+        icon: Clock, 
+        variant: 'outline', 
+        label: 'In Progress',
+        colorClass: 'border-amber-500 text-amber-700 bg-amber-50'
+      },
+      PENDING: { 
+        icon: Clock, 
+        variant: 'outline', 
+        label: 'Pending',
+        colorClass: 'border-purple-500 text-purple-700 bg-purple-50'
+      },
+      APPROVED: { 
+        icon: CheckCircle, 
+        variant: 'outline', 
+        label: 'Approved',
+        colorClass: 'border-green-500 text-green-700 bg-green-50'
+      },
+      ON_HOLD: { 
+        icon: AlertTriangle, 
+        variant: 'outline', 
+        label: 'On Hold',
+        colorClass: 'border-yellow-500 text-yellow-700 bg-yellow-50'
+      },
+      CANCELLED: { 
+        icon: XCircle, 
+        variant: 'outline', 
+        label: 'Cancelled',
+        colorClass: 'border-red-500 text-red-700 bg-red-50'
+      },
     }
     const config = statusConfig[status] || { variant: 'secondary', label: status }
     const Icon = config.icon
     return (
-      <Badge variant={config.variant as any} className="flex items-center gap-1">
+      <Badge variant={config.variant as any} className={`flex items-center gap-1 ${config.colorClass || ''}`}>
         {Icon && <Icon className="h-3 w-3" />}
         {config.label}
       </Badge>
@@ -300,16 +331,36 @@ export default function CasesPage() {
   }
 
   const getApprovalStatusBadge = (approvalStatus: string) => {
-    const statusConfig: Record<string, { icon: any; variant: any; label: string }> = {
-      DRAFT: { icon: FileText, variant: 'secondary', label: 'Draft' },
-      PENDING_PM_APPROVAL: { icon: Clock, variant: 'warning', label: 'Pending Approval' },
-      PM_APPROVED: { icon: CheckCircle, variant: 'success', label: 'Approved' },
-      PM_REJECTED: { icon: XCircle, variant: 'destructive', label: 'Rejected' },
+    const statusConfig: Record<string, { icon: any; variant: any; label: string; colorClass?: string }> = {
+      DRAFT: { 
+        icon: FileText, 
+        variant: 'outline', 
+        label: 'Draft',
+        colorClass: 'border-yellow-500 text-yellow-700 bg-yellow-50'
+      },
+      PENDING_PM_APPROVAL: { 
+        icon: Clock, 
+        variant: 'outline', 
+        label: 'Pending Approval',
+        colorClass: 'border-red-500 text-red-700 bg-red-50'
+      },
+      PM_APPROVED: { 
+        icon: CheckCircle, 
+        variant: 'ghost', 
+        label: 'Approved',
+        colorClass: 'text-gray-600'
+      },
+      PM_REJECTED: { 
+        icon: XCircle, 
+        variant: 'ghost', 
+        label: 'Rejected',
+        colorClass: 'text-red-700'
+      },
     }
-    const config = statusConfig[approvalStatus] || { icon: FileText, variant: 'secondary', label: approvalStatus }
+    const config = statusConfig[approvalStatus] || { icon: FileText, variant: 'ghost', label: approvalStatus }
     const Icon = config.icon
     return (
-      <Badge variant={config.variant as any} className="flex items-center gap-1">
+      <Badge variant={config.variant as any} className={`flex items-center gap-1 ${config.colorClass || ''}`}>
         <Icon className="h-3 w-3" />
         {config.label}
       </Badge>
@@ -436,7 +487,7 @@ export default function CasesPage() {
       overdue: caseGroups.filter(c => {
         if (!c.target_completion_date) return false
         const targetDate = new Date(c.target_completion_date)
-        return targetDate < now && !['COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(c.status)
+        return targetDate < now && !['APPROVED', 'COMPLETED', 'CANCELLED', 'WITHDRAWN'].includes(c.status)
       }).length,
       
       dueSoon: caseGroups.filter(c => {
@@ -810,7 +861,7 @@ export default function CasesPage() {
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('status')}>
                         <div className="flex items-center">
-                          Status
+                          Case Status
                           {getSortIcon('status')}
                         </div>
                       </TableHead>
@@ -822,7 +873,7 @@ export default function CasesPage() {
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('approval_status')}>
                         <div className="flex items-center">
-                          Approval
+                          PM Approval
                           {getSortIcon('approval_status')}
                         </div>
                       </TableHead>

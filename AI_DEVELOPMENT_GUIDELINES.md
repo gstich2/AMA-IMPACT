@@ -110,7 +110,7 @@ const mockUsers = [
 - **L2: TSF** - Thermo-Physics Facilities Branch
   - No manager assigned
 - **L2: TSS** - Entry Systems and Vehicle Development Branch
-  - Manager: Blake Lively (blake.lively@ama-inc.com) ⭐ DUAL ROLE
+  - Manager: Blake Hannah (blake.hannah@ama-inc.com) ⭐ DUAL ROLE
 
 #### L1: NASA Advanced Supercomputing Division (TN) - Parent Dept
 - **L2: TNA** - Computational Aerosciences Branch
@@ -122,37 +122,16 @@ const mockUsers = [
 - **L2: AV** - Aeromechanics Office
   - Manager: Gerrit-Daniel Stich (gerrit-daniel.stich@ama-inc.com) ⭐ DUAL ROLE
 - **L2: AA** - Systems Analysis Office
-  - Manager: Blake Lively (blake.lively@ama-inc.com) ⭐ DUAL ROLE
+  - Manager: Blake hannah (blake.hannah@ama-inc.com) ⭐ DUAL ROLE
 
 #### L1: Aeroflightdynamics Directorate (Y) - Parent Dept (US Army)
 - **L2: YA** - Computational Aeromechanics Tech Area
   - Manager: Shirzad Hoseinverdy (shirzad.hoseinverdy@ama-inc.com)
 
 **Dual Role Managers:**
-- Blake Lively: TSS + AA
+- Blake Hannah: TSS + AA
 - Gerrit-Daniel Stich: TNA + AV
 
-**File Location:** `backend/scripts/fixtures/contracts/seed_assess.py`
-
-**Verification Query:**
-```sql
-SELECT d.code, d.name, d.level, u.full_name as manager, 
-       COALESCE(p.code, '(top level)') as parent
-FROM departments d 
-LEFT JOIN users u ON d.manager_id = u.id
-LEFT JOIN departments p ON d.parent_id = p.id
-WHERE d.contract_id IN (SELECT id FROM contracts WHERE code='ASSESS')
-ORDER BY d.level, d.code;
-```
-
-**Expected Result:** 13 rows (4 L1, 9 L2)
-
-**Reference Files:**
-- `NASA_AMES_ORGANIZATIONAL_STRUCTURE.md` - Complete documentation
-- `backend/scripts/README.md` - Full hierarchy documented
-- `backend/scripts/fixtures/README.md` - Manager assignments
-
----
 
 ## 4. Documentation Style - Alpha Stage
 
@@ -205,43 +184,13 @@ We have implemented a case tracking system with the following history:
 ## 5. Project Structure Quick Reference
 
 ### Backend
-```
-backend/
-├── app/
-│   ├── api/v1/           # API endpoints
-│   ├── models/           # SQLAlchemy models
-│   ├── schemas/          # Pydantic schemas
-│   ├── services/         # Business logic
-│   └── core/             # Config, database, security
-├── scripts/
-│   ├── setup_dev_environment.py  # ⭐ ONE COMMAND TO RESET ALL
-│   ├── init_database.py          # Initialize DB only
-│   └── fixtures/                 # Seed data
-│       ├── seed_visa_types.py
-│       ├── seed_law_firms.py
-│       ├── seed_development_data.py
-│       └── contracts/
-│           ├── seed_assess.py    # ⭐ NASA Ames structure here
-│           └── seed_rses.py
-└── devel.db              # SQLite database (gitignored)
-```
+
+
+TODO CHECK AGAIN WAS UPDATED 
 
 ### Frontend
-```
-frontend/
-├── app/                  # Next.js pages (App Router)
-│   ├── cases/           # Case tracking pages
-│   ├── dashboard/       # Dashboard
-│   ├── admin/           # Admin pages
-│   └── login/           # Auth pages
-├── components/
-│   ├── ui/              # shadcn components
-│   └── layout/          # Layout components
-└── lib/
-    └── api.ts           # ⭐ API client - all endpoints here
-```
 
----
+TODO CHECK AGAIN WAS UPDATED 
 
 ## 6. Common Tasks - Copy/Paste Commands
 
@@ -252,18 +201,10 @@ python scripts/setup_dev_environment.py
 ```
 
 ### Start Backend Server
-```bash
-cd backend
-./start_server.sh
-# or
-python -m uvicorn app.main:app --reload --port 8001
-```
+check if backend is running on 7001 in background terminal, if not tell me to do it 
 
 ### Start Frontend Dev Server
-```bash
-cd frontend
-npm run dev
-```
+Ask me to restart it in 3000 port if needed 
 
 ### Verify NASA Structure
 ```bash
@@ -281,38 +222,6 @@ sqlite3 devel.db "SELECT email, full_name, role FROM users WHERE role='MANAGER' 
 
 ## 7. API Client Pattern
 
-### Always add new endpoints to `frontend/lib/api.ts`:
-
-```typescript
-export const newFeatureAPI = {
-  getAll: async (params?: any) => {
-    const response = await api.get('/new-feature/', { params })
-    return response.data
-  },
-  
-  getById: async (id: string) => {
-    const response = await api.get(`/new-feature/${id}`)
-    return response.data
-  },
-  
-  create: async (data: any) => {
-    const response = await api.post('/new-feature/', data)
-    return response.data
-  },
-  
-  update: async (id: string, data: any) => {
-    const response = await api.patch(`/new-feature/${id}`, data)
-    return response.data
-  },
-  
-  delete: async (id: string) => {
-    const response = await api.delete(`/new-feature/${id}`)
-    return response.data
-  },
-}
-```
-
----
 
 ## 8. User Roles and Permissions
 

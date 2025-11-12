@@ -11,17 +11,46 @@ from app.core.database import Base
 
 class MilestoneType(str, enum.Enum):
     """Types of milestones in a visa application process."""
+    # Generic milestones (applicable to most visa types)
     CASE_OPENED = "case_opened"
     DOCUMENTS_REQUESTED = "documents_requested"
     DOCUMENTS_SUBMITTED = "documents_submitted"
+    APPROVED = "approved"
+    DENIED = "denied"
+    CASE_CLOSED = "case_closed"
+    
+    # H1B Specific milestones
+    LCA_FILED = "lca_filed"
+    LCA_APPROVED = "lca_approved"
+    H1B_FILED = "h1b_filed"
+    H1B_APPROVED = "h1b_approved"
+    
+    # EB2/EB3 (I-140) Specific milestones
+    I140_FILED = "i140_filed"
+    I140_APPROVED = "i140_approved"
+    
+    # I-485 (Adjustment of Status / Green Card) Specific milestones
+    I485_FILED = "i485_filed"
+    BIOMETRICS_COMPLETED = "biometrics_completed"
+    
+    # PERM (Labor Certification) Specific milestones
+    PWD_FILED = "pwd_filed"
+    PWD_APPROVED = "pwd_approved"
+    PERM_FILED = "perm_filed"
+    PERM_APPROVED = "perm_approved"
+    
+    # TN Specific milestones
+    TN_BORDER_APPOINTMENT = "tn_border_appointment"
+    TN_APPROVED = "tn_approved"
+    
+    # USCIS General (keep for backward compatibility)
     FILED_WITH_USCIS = "filed_with_uscis"
     RFE_RECEIVED = "rfe_received"
     RFE_RESPONDED = "rfe_responded"
     INTERVIEW_SCHEDULED = "interview_scheduled"
     INTERVIEW_COMPLETED = "interview_completed"
-    APPROVED = "approved"
-    DENIED = "denied"
-    CASE_CLOSED = "case_closed"
+    
+    # Other
     OTHER = "other"
 
 

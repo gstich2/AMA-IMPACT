@@ -872,3 +872,161 @@ def get_case_group_timeline(
         total_events=len(events),
         events=events
     )
+
+
+@router.get("/{case_group_id}/progress")
+def get_case_group_progress(
+    *,
+    db: Session = Depends(get_db),
+    case_group_id: str,
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Calculate progress for ALL visa applications in a case group.
+    
+    Each visa application has its own pipeline based on visa_type.
+    Case group progress is the aggregate of all visa application progresses.
+    
+    Returns:
+    - overall_percentage: Overall case group progress (weighted average of all visas)
+    - overall_stage: Description of overall case status
+    - visa_applications: Array of visa apps with individual progress and pipelines
+    
+    Permissions:
+    - BENEFICIARY: Can view their own case group progress
+    - PM/HR/MANAGER: Can view case groups in their contract
+    - ADMIN: Can view any case group progress
+    """
+    from app.config.visa_pipelines import get_pipeline_for_visa_type
+    from app.models.milestone import ApplicationMilestone
+    
+    # Get case group and check permissions
+    case_group = db.query(CaseGroup).filter(CaseGroup.id == case_group_id).first()
+    
+    if not case_group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Case group not found",
+        )
+    
+    # Permission checks (same as get_case_group)
+    if current_user.role == UserRole.BENEFICIARY:
+        # Beneficiaries can only view their own cases
+        beneficiary = db.query(Beneficiary).filter(
+            Beneficiary.user_id == current_user.id
+        ).first()
+        if not beneficiary or case_group.beneficiary_id != beneficiary.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view your own case progress",
+            )
+    elif current_user.role in [UserRole.PM, UserRole.HR, UserRole.MANAGER]:
+        # PM/HR/MANAGER can only view cases in their contract
+        beneficiary = db.query(Beneficiary).filter(
+            Beneficiary.id == case_group.beneficiary_id
+        ).first()
+        if not beneficiary or beneficiary.user.contract_id != current_user.contract_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You can only view case groups in your contract",
+            )
+    # ADMIN can view all
+    
+    if not case_group.applications:
+        return {
+            "case_group_id": case_group_id,
+            "overall_percentage": 0,
+            "overall_stage": "No visa applications",
+            "visa_applications": []
+        }
+    
+    visa_progress_list = []
+    total_progress = 0
+    
+    # Calculate progress for EACH visa application
+    for visa_app in case_group.applications:
+        # Get pipeline config for THIS visa type
+        pipeline_config = get_pipeline_for_visa_type(visa_app.visa_type)
+        
+        # Get milestones for THIS visa application only
+        milestones = db.query(ApplicationMilestone).filter(
+            ApplicationMilestone.visa_application_id == visa_app.id
+        ).all()
+        
+        # Build set of completed milestone types
+        completed_milestone_types = {m.milestone_type for m in milestones}
+        
+        # Calculate progress for this visa
+        max_weight = 0
+        current_stage_label = "Not Started"
+        next_stage = None
+        pipeline_with_status = []
+        
+        for stage in pipeline_config["stages"]:
+            milestone_type = stage["milestone_type"]
+            is_completed = milestone_type in completed_milestone_types
+            
+            if is_completed and stage["weight"] > max_weight:
+                max_weight = stage["weight"]
+                current_stage_label = stage["label"]
+            
+            # Find completion date
+            completion_date = None
+            if is_completed:
+                for m in milestones:
+                    if m.milestone_type == milestone_type:
+                        completion_date = m.milestone_date.isoformat()
+                        break
+            
+            pipeline_with_status.append({
+                "order": stage["order"],
+                "milestone_type": milestone_type.value,
+                "label": stage["label"],
+                "description": stage.get("description"),
+                "weight": stage["weight"],
+                "required": stage["required"],
+                "terminal": stage.get("terminal", False),
+                "completed": is_completed,
+                "completion_date": completion_date,
+            })
+            
+            # Track next incomplete required stage
+            if not is_completed and stage["required"] and next_stage is None:
+                next_stage = stage["label"]
+        
+        visa_progress_list.append({
+            "visa_application_id": visa_app.id,
+            "visa_type": visa_app.visa_type.value,
+            "petition_type": visa_app.petition_type,
+            "visa_status": visa_app.status.value if visa_app.status else None,
+            "case_status": visa_app.case_status.value if visa_app.case_status else None,
+            "percentage": max_weight,
+            "current_stage": current_stage_label,
+            "next_stage": next_stage,
+            "pipeline_name": pipeline_config["name"],
+            "pipeline": pipeline_with_status,
+        })
+        
+        total_progress += max_weight
+    
+    # Overall case group progress = average of all visa apps
+    overall_percentage = total_progress // len(case_group.applications) if case_group.applications else 0
+    
+    # Determine overall stage description
+    if overall_percentage == 100:
+        overall_stage = "Complete"
+    elif overall_percentage >= 80:
+        overall_stage = "Nearing Completion"
+    elif overall_percentage >= 50:
+        overall_stage = "In Progress"
+    elif overall_percentage >= 25:
+        overall_stage = "Early Stage"
+    else:
+        overall_stage = "Getting Started"
+    
+    return {
+        "case_group_id": case_group_id,
+        "overall_percentage": overall_percentage,
+        "overall_stage": overall_stage,
+        "visa_applications": visa_progress_list,
+    }

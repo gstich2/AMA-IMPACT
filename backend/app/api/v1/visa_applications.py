@@ -412,3 +412,80 @@ async def delete_visa_application(
     db.commit()
     
     return None
+
+
+@router.get("/{application_id}/available-milestones")
+async def get_available_milestones(
+    application_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    """
+    Get available milestone types for this visa application based on its visa type.
+    Returns the full pipeline with status (completed/incomplete).
+    
+    This endpoint helps users know which milestones are valid for this specific visa type.
+    For example, an H1B will show LCA-related milestones, while an EB-2 NIW will show I-140 milestones.
+    
+    Permissions:
+    - BENEFICIARY: Can view milestones for their own visa applications
+    - PM/HR/MANAGER: Can view milestones for applications in their contract
+    - ADMIN: Can view milestones for any application
+    """
+    from app.config.visa_pipelines import get_pipeline_for_visa_type
+    from app.models.milestone import ApplicationMilestone
+    
+    # Build query with role-based filtering
+    rbac = RBACService(db, current_user)
+    query = db.query(VisaApplication).filter(VisaApplication.id == application_id)
+    query = rbac.apply_visa_application_filters(query)
+    
+    visa_app = query.first()
+    
+    if not visa_app:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Visa application not found or access denied"
+        )
+    
+    # Get pipeline for this visa type
+    pipeline_config = get_pipeline_for_visa_type(visa_app.visa_type)
+    
+    # Get completed milestones
+    milestones = db.query(ApplicationMilestone).filter(
+        ApplicationMilestone.visa_application_id == application_id
+    ).all()
+    completed_types = {m.milestone_type for m in milestones}
+    
+    # Return pipeline with completion status
+    available_milestones = []
+    for stage in pipeline_config["stages"]:
+        milestone_type = stage["milestone_type"]
+        is_completed = milestone_type in completed_types
+        
+        # Find completion date if completed
+        completion_date = None
+        if is_completed:
+            for m in milestones:
+                if m.milestone_type == milestone_type:
+                    completion_date = m.milestone_date.isoformat()
+                    break
+        
+        available_milestones.append({
+            "milestone_type": milestone_type.value,
+            "label": stage["label"],
+            "description": stage.get("description"),
+            "required": stage["required"],
+            "weight": stage["weight"],
+            "completed": is_completed,
+            "completion_date": completion_date,
+        })
+    
+    return {
+        "visa_application_id": application_id,
+        "visa_type": visa_app.visa_type.value,
+        "petition_type": visa_app.petition_type,
+        "pipeline_name": pipeline_config["name"],
+        "pipeline_description": pipeline_config["description"],
+        "milestones": available_milestones,
+    }
