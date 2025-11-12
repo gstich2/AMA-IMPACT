@@ -62,7 +62,7 @@ def setup_dev_environment():
         (SCRIPTS_DIR / "fixtures" / "seed_law_firms.py", "Seed Law Firms"),
         (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess_beneficiary_users.py", "Seed ASSESS Beneficiary Users"),
         (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess_case_groups.py", "Seed ASSESS Case Groups"),
-        (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess_visa_apps.py", "Seed ASSESS Visa Applications"),
+        (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess_petitions.py", "Seed ASSESS Petitions"),
         (SCRIPTS_DIR / "fixtures" / "seed_development_data.py", "Seed Development Test Data"),
     ]
     

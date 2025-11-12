@@ -69,15 +69,31 @@ def seed_assess_beneficiary_users():
             User.email == 'pm.assess@ama-impact.com'
         ).first()
         
-        if not all([dept_tna, dept_tnp, dept_av, dept_tss, manager_gerrit, manager_patricia, pm_user]):
+        # Get TSA and TSM managers for beneficiary records
+        manager_bhaskaran = db.query(User).filter(
+            User.email == 'bhaskaran.rathakrishnan@ama-inc.com'
+        ).first()
+        manager_arnaud = db.query(User).filter(
+            User.email == 'arnaud.borner@ama-inc.com'
+        ).first()
+        
+        if not all([dept_tna, dept_tnp, dept_av, dept_tss, manager_gerrit, manager_patricia, manager_bhaskaran, manager_arnaud, pm_user]):
             print("   ❌ Required departments or managers not found!")
             return False
         
         print("   ✓ Found existing data")
         
-        # Employee data from user
+        # Get additional managers for beneficiary records
+        manager_bhaskaran = db.query(User).filter(
+            User.email == 'bhaskaran.rathakrishnan@ama-inc.com'
+        ).first()
+        manager_arnaud = db.query(User).filter(
+            User.email == 'arnaud.borner@ama-inc.com'
+        ).first()
+        
+        # Employee data from Employee data.md
         employees = [
-            # Managers with LPR (already exist as users, just add beneficiary records)
+            # Managers with completed LPR (already exist as users, just add beneficiary records)
             {
                 'existing_user': manager_gerrit,
                 'first_name': 'Gerrit-Daniel',
@@ -91,6 +107,34 @@ def seed_assess_beneficiary_users():
                 'i94_expiration': None,
                 'job_title': 'Branch Technical Lead, Principal Associate',
                 'employment_start_date': date(2015, 1, 1)
+            },
+            {
+                'existing_user': manager_bhaskaran,
+                'first_name': 'Bhaskaran',
+                'last_name': 'Rathakrishnan',
+                'country_of_citizenship': 'India',
+                'country_of_birth': 'India',
+                'passport_country': 'India',
+                'passport_expiration': date(2031, 8, 15),
+                'current_visa_type': 'LPR',
+                'current_visa_expiration': date(2032, 6, 1),
+                'i94_expiration': None,
+                'job_title': 'Branch Manager, Aerothermodynamics',
+                'employment_start_date': date(2014, 9, 1)
+            },
+            {
+                'existing_user': manager_arnaud,
+                'first_name': 'Arnaud',
+                'last_name': 'Borner',
+                'country_of_citizenship': 'France',
+                'country_of_birth': 'France',
+                'passport_country': 'France',
+                'passport_expiration': date(2033, 3, 20),
+                'current_visa_type': 'LPR',
+                'current_visa_expiration': date(2034, 2, 15),
+                'i94_expiration': None,
+                'job_title': 'Branch Manager, Thermal Protection Materials',
+                'employment_start_date': date(2016, 2, 15)
             },
             # TNA employees
             {
@@ -236,7 +280,7 @@ def seed_assess_beneficiary_users():
                 'email': 'georgios.bellas-chatzigeorgis@ama-inc.com',
                 'full_name': 'Georgios Bellas-Chatzigeorgis',
                 'department': dept_tss,
-                'reports_to': manager_gerrit,  # Note: TSS manager is Arnaud Borner, but data said reports to Arnaud Boerner (typo?)
+                'reports_to': manager_arnaud,  # Fixed: Reports to Arnaud Borner (TSM manager)
                 'first_name': 'Georgios',
                 'last_name': 'Bellas-Chatzigeorgis',
                 'country_of_citizenship': 'Greece',
@@ -319,7 +363,7 @@ def seed_assess_beneficiary_users():
         
         print(f"\n✅ ASSESS beneficiary users seeded successfully!")
         print(f"   Users created: {count_users}")
-        print(f"   Beneficiaries created: {count_beneficiaries}")
+        print(f"   Beneficiaries created: {count_beneficiaries} (3 managers with LPR + 8 employees + 1 future hire)")
         print(f"   All passwords: Dev123!")
         
         return True

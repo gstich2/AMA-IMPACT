@@ -12,8 +12,8 @@ from datetime import datetime, date
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from app.core.database import SessionLocal
-from app.models.case_group import CaseGroup, CaseType, CaseStatus, ApprovalStatus
-from app.models.visa import VisaPriority
+from app.models.case_group import CaseGroup, PathwayType, CaseStatus, ApprovalStatus
+from app.models.petition import PetitionPriority
 from app.models.beneficiary import Beneficiary
 from app.models.user import User
 from app.models.law_firm import LawFirm
@@ -38,10 +38,12 @@ def seed_case_groups():
         # Get law firm
         law_firm = db.query(LawFirm).filter(LawFirm.name.like("%Visa Law%")).first()
         
-        # Get beneficiaries by email
+        # Get beneficiaries by email (all 13 employees)
         beneficiaries = {}
         emails = [
             "gerrit-daniel.stich@ama-inc.com",
+            "bhaskaran.rathakrishnan@ama-inc.com",
+            "arnaud.borner@ama-inc.com",
             "brandon.lowe@ama-inc.com",
             "david.c.penner@ama-inc.com",
             "timothy.chau@ama-inc.com",
@@ -73,31 +75,79 @@ def seed_case_groups():
         # COMPLETED CASES (status=APPROVED)
         # ==========================================
         
-        # 1. Gerrit-Daniel Stich - Completed EB2-NIW (has LPR)
+        # 1. Gerrit-Daniel Stich - Completed EB3-PERM (has LPR)
         if "gerrit-daniel.stich@ama-inc.com" in beneficiaries:
             gerrit_ben = beneficiaries["gerrit-daniel.stich@ama-inc.com"]
             case = CaseGroup(
                 beneficiary_id=gerrit_ben.id,
                 responsible_party_id=pm_user.id,
-                created_by_manager_id=gerrit_ben.user.reports_to_id,
+                created_by_manager_id=pm_user.id,  # Self-initiated as manager
                 law_firm_id=law_firm.id if law_firm else None,
                 approval_status=ApprovalStatus.PM_APPROVED,
                 approved_by_pm_id=pm_user.id,
-                pm_approval_date=date(2021, 3, 15),
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2021-001",
+                pm_approval_date=date(2017, 6, 1),
+                pathway_type=PathwayType.EB3_PERM,  # EB3 with PERM
+                case_number="ASSESS-EB3-2017-001",
                 status=CaseStatus.APPROVED,
-                priority=VisaPriority.MEDIUM,
-                case_started_date=date(2021, 1, 15),
+                priority=PetitionPriority.MEDIUM,
+                case_started_date=date(2017, 6, 15),
                 target_completion_date=date(2021, 12, 31),
-                case_completed_date=date(2021, 11, 20),
-                notes="Successfully completed EB2-NIW case. Green card received."
+                case_completed_date=date(2021, 10, 15),
+                notes="Completed EB3-PERM case. Green card received in 2021. H1B from 2017-2021."
             )
             db.add(case)
             case_groups_created += 1
-            print(f"   ✓ Created APPROVED case for Gerrit-Daniel Stich")
+            print(f"   ✓ Created APPROVED case for Gerrit-Daniel Stich (EB3-PERM → LPR)")
         
-        # 2. Victor Sousa - Completed EB2-NIW (has LPR)
+        # 2. Bhaskaran Rathakrishnan - Completed EB2-NIW (has LPR)
+        if "bhaskaran.rathakrishnan@ama-inc.com" in beneficiaries:
+            bhaskaran_ben = beneficiaries["bhaskaran.rathakrishnan@ama-inc.com"]
+            case = CaseGroup(
+                beneficiary_id=bhaskaran_ben.id,
+                responsible_party_id=pm_user.id,
+                created_by_manager_id=pm_user.id,
+                law_firm_id=law_firm.id if law_firm else None,
+                approval_status=ApprovalStatus.PM_APPROVED,
+                approved_by_pm_id=pm_user.id,
+                pm_approval_date=date(2017, 8, 1),
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2017-002",
+                status=CaseStatus.APPROVED,
+                priority=PetitionPriority.MEDIUM,
+                case_started_date=date(2017, 9, 1),
+                target_completion_date=date(2019, 12, 31),
+                case_completed_date=date(2019, 11, 20),
+                notes="Completed EB2-NIW case. Green card received in 2019."
+            )
+            db.add(case)
+            case_groups_created += 1
+            print(f"   ✓ Created APPROVED case for Bhaskaran Rathakrishnan (EB2-NIW → LPR)")
+        
+        # 3. Arnaud Borner - Completed EB2-NIW (has LPR)
+        if "arnaud.borner@ama-inc.com" in beneficiaries:
+            arnaud_ben = beneficiaries["arnaud.borner@ama-inc.com"]
+            case = CaseGroup(
+                beneficiary_id=arnaud_ben.id,
+                responsible_party_id=pm_user.id,
+                created_by_manager_id=pm_user.id,
+                law_firm_id=law_firm.id if law_firm else None,
+                approval_status=ApprovalStatus.PM_APPROVED,
+                approved_by_pm_id=pm_user.id,
+                pm_approval_date=date(2019, 1, 10),
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2019-003",
+                status=CaseStatus.APPROVED,
+                priority=PetitionPriority.MEDIUM,
+                case_started_date=date(2019, 4, 15),
+                target_completion_date=date(2021, 6, 30),
+                case_completed_date=date(2021, 5, 30),
+                notes="Completed EB2-NIW case. Green card received in 2021."
+            )
+            db.add(case)
+            case_groups_created += 1
+            print(f"   ✓ Created APPROVED case for Arnaud Borner (EB2-NIW → LPR)")
+        
+        # 4. Victor Sousa - Completed EB2-NIW (has LPR)
         if "victor.sousa@ama-inc.com" in beneficiaries:
             victor_ben = beneficiaries["victor.sousa@ama-inc.com"]
             case = CaseGroup(
@@ -108,24 +158,24 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.PM_APPROVED,
                 approved_by_pm_id=pm_user.id,
                 pm_approval_date=date(2022, 5, 10),
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2022-002",
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2022-004",
                 status=CaseStatus.APPROVED,
-                priority=VisaPriority.MEDIUM,
+                priority=PetitionPriority.MEDIUM,
                 case_started_date=date(2022, 3, 1),
                 target_completion_date=date(2023, 2, 28),
                 case_completed_date=date(2023, 1, 15),
-                notes="Successfully completed EB2-NIW case. Green card received."
+                notes="Completed EB2-NIW case. Green card received in 2023."
             )
             db.add(case)
             case_groups_created += 1
-            print(f"   ✓ Created APPROVED case for Victor Sousa")
+            print(f"   ✓ Created APPROVED case for Victor Sousa (EB2-NIW → LPR)")
         
         # ==========================================
         # PM_APPROVED ACTIVE CASES (status=IN_PROGRESS)
         # ==========================================
         
-        # 3. Luis Fernandes - Active EB2-NIW (I-140 received 2 weeks ago)
+        # 5. Luis Fernandes - Active EB2-NIW (I-140 received 2 weeks ago)
         if "luis.fernandes@ama-inc.com" in beneficiaries:
             luis_ben = beneficiaries["luis.fernandes@ama-inc.com"]
             case = CaseGroup(
@@ -136,20 +186,20 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.PM_APPROVED,
                 approved_by_pm_id=pm_user.id,
                 pm_approval_date=date(2024, 8, 15),
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2024-003",
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2024-005",
                 status=CaseStatus.IN_PROGRESS,
-                priority=VisaPriority.HIGH,
+                priority=PetitionPriority.HIGH,
                 case_started_date=date(2024, 8, 20),
                 target_completion_date=date(2025, 8, 31),
                 case_completed_date=None,
-                notes="I-140 approved and received on Oct 28, 2024. Awaiting priority date."
+                notes="I-140 approved and received on Oct 28, 2024. Now collecting documents for I-485."
             )
             db.add(case)
             case_groups_created += 1
-            print(f"   ✓ Created IN_PROGRESS case for Luis Fernandes (I-140 received)")
+            print(f"   ✓ Created IN_PROGRESS case for Luis Fernandes (I-140 received, I-485 prep)")
         
-        # 4. Kiran Ravikumar - Active EB2-NIW (I-140 just filed)
+        # 6. Kiran Ravikumar - Active EB2-NIW (I-140 just filed)
         if "kiran.ravikumar@ama-inc.com" in beneficiaries:
             kiran_ben = beneficiaries["kiran.ravikumar@ama-inc.com"]
             case = CaseGroup(
@@ -160,10 +210,10 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.PM_APPROVED,
                 approved_by_pm_id=pm_user.id,
                 pm_approval_date=date(2024, 9, 1),
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2024-004",
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2024-006",
                 status=CaseStatus.IN_PROGRESS,
-                priority=VisaPriority.HIGH,
+                priority=PetitionPriority.HIGH,
                 case_started_date=date(2024, 9, 15),
                 target_completion_date=date(2025, 9, 30),
                 case_completed_date=None,
@@ -171,7 +221,7 @@ def seed_case_groups():
             )
             db.add(case)
             case_groups_created += 1
-            print(f"   ✓ Created IN_PROGRESS case for Kiran Ravikumar (I-140 filed)")
+            print(f"   ✓ Created IN_PROGRESS case for Kiran Ravikumar (I-140 just filed)")
         
         # 5. David Craig Penner - PM approved but HR hasn't scheduled meetings
         if "david.c.penner@ama-inc.com" in beneficiaries:
@@ -184,10 +234,10 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.PM_APPROVED,
                 approved_by_pm_id=pm_user.id,
                 pm_approval_date=date(2024, 10, 1),
-                case_type=CaseType.TN,
-                case_number="ASSESS-TN-2024-005",
+                pathway_type=PathwayType.TN,
+                case_number="ASSESS-TN-2024-007",
                 status=CaseStatus.IN_PROGRESS,
-                priority=VisaPriority.MEDIUM,
+                priority=PetitionPriority.MEDIUM,
                 case_started_date=None,  # Not started yet, waiting on HR
                 target_completion_date=date(2025, 1, 31),
                 case_completed_date=None,
@@ -208,10 +258,10 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.PM_APPROVED,
                 approved_by_pm_id=pm_user.id,
                 pm_approval_date=date(2024, 9, 15),
-                case_type=CaseType.H1B_INITIAL,
-                case_number="ASSESS-H1B-2024-006",
+                pathway_type=PathwayType.H1B_INITIAL,
+                case_number="ASSESS-H1B-2024-008",
                 status=CaseStatus.IN_PROGRESS,
-                priority=VisaPriority.HIGH,
+                priority=PetitionPriority.HIGH,
                 case_started_date=None,  # Not started yet, waiting on HR
                 target_completion_date=date(2025, 4, 1),
                 case_completed_date=None,
@@ -221,7 +271,7 @@ def seed_case_groups():
             case_groups_created += 1
             print(f"   ✓ Created IN_PROGRESS case for Jacob Friedrichson (future hire)")
         
-        # 7. Georgios Bellas-Chatzigeorgis - PERM approved, preparing I-140
+                # 9. Georgios Bellas-Chatzigeorgis - EB2-PERM (PERM approved, preparing I-140)
         if "georgios.bellas-chatzigeorgis@ama-inc.com" in beneficiaries:
             georgios_ben = beneficiaries["georgios.bellas-chatzigeorgis@ama-inc.com"]
             case = CaseGroup(
@@ -232,18 +282,18 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.PM_APPROVED,
                 approved_by_pm_id=pm_user.id,
                 pm_approval_date=date(2024, 1, 10),
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2024-007",
+                pathway_type=PathwayType.EB2_PERM,
+                case_number="ASSESS-EB2-2024-009",
                 status=CaseStatus.IN_PROGRESS,
-                priority=VisaPriority.HIGH,
+                priority=PetitionPriority.HIGH,
                 case_started_date=date(2024, 1, 15),
-                target_completion_date=date(2025, 1, 31),
+                target_completion_date=date(2025, 12, 31),
                 case_completed_date=None,
-                notes="PERM approved on Sep 15, 2024. Currently preparing I-140 documents."
+                notes="PERM approved on Sep 15, 2024. Currently preparing I-140 documents with Goel & Anderson."
             )
             db.add(case)
             case_groups_created += 1
-            print(f"   ✓ Created IN_PROGRESS case for Georgios Bellas-Chatzigeorgis (PERM approved)")
+            print(f"   ✓ Created IN_PROGRESS case for Georgios Bellas-Chatzigeorgis (EB2-PERM, preparing I-140)")
         
         # ==========================================
         # PENDING PM APPROVAL (status=PENDING)
@@ -260,10 +310,10 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.PENDING_PM_APPROVAL,
                 approved_by_pm_id=None,
                 pm_approval_date=None,
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2024-008",
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2024-012",
                 status=CaseStatus.PENDING,
-                priority=VisaPriority.MEDIUM,
+                priority=PetitionPriority.MEDIUM,
                 case_started_date=None,
                 target_completion_date=date(2025, 12, 31),
                 case_completed_date=None,
@@ -273,7 +323,7 @@ def seed_case_groups():
             case_groups_created += 1
             print(f"   ✓ Created PENDING case for Brandon Lowe (awaiting PM approval)")
         
-        # 9. Timothy Chau - Pending PM approval
+        # 11. Timothy Chau - Marriage-based GC (PM approved but not started)
         if "timothy.chau@ama-inc.com" in beneficiaries:
             timothy_ben = beneficiaries["timothy.chau@ama-inc.com"]
             case = CaseGroup(
@@ -281,21 +331,21 @@ def seed_case_groups():
                 responsible_party_id=pm_user.id,
                 created_by_manager_id=timothy_ben.user.reports_to_id,
                 law_firm_id=law_firm.id if law_firm else None,
-                approval_status=ApprovalStatus.PENDING_PM_APPROVAL,
-                approved_by_pm_id=None,
-                pm_approval_date=None,
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2024-009",
-                status=CaseStatus.PENDING,
-                priority=VisaPriority.MEDIUM,
-                case_started_date=None,
+                approval_status=ApprovalStatus.PM_APPROVED,
+                approved_by_pm_id=pm_user.id,
+                pm_approval_date=date(2024, 10, 30),
+                pathway_type=PathwayType.MARRIAGE_BASED_GC,
+                case_number="ASSESS-MARRIAGE-2024-011",
+                status=CaseStatus.IN_PROGRESS,
+                priority=PetitionPriority.MEDIUM,
+                case_started_date=None,  # Not started yet
                 target_completion_date=date(2025, 12, 31),
                 case_completed_date=None,
-                notes="Submitted for PM approval on Oct 30, 2024. Awaiting decision."
+                notes="PM approved on Oct 30, 2024. Marriage-based green card application (I-130 + I-485). Will proceed forward."
             )
             db.add(case)
             case_groups_created += 1
-            print(f"   ✓ Created PENDING case for Timothy Chau (awaiting PM approval)")
+            print(f"   ✓ Created IN_PROGRESS case for Timothy Chau (Marriage-based GC, PM approved)")
         
         # ==========================================
         # DRAFT CASES (status=PLANNING)
@@ -312,10 +362,10 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.DRAFT,
                 approved_by_pm_id=None,
                 pm_approval_date=None,
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2024-010",
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2024-012",
                 status=CaseStatus.PLANNING,
-                priority=VisaPriority.LOW,
+                priority=PetitionPriority.LOW,
                 case_started_date=None,
                 target_completion_date=date(2026, 6, 30),
                 case_completed_date=None,
@@ -336,10 +386,10 @@ def seed_case_groups():
                 approval_status=ApprovalStatus.DRAFT,
                 approved_by_pm_id=None,
                 pm_approval_date=None,
-                case_type=CaseType.EB2_NIW,
-                case_number="ASSESS-EB2-2024-011",
+                pathway_type=PathwayType.EB2_NIW,
+                case_number="ASSESS-EB2-2024-013",
                 status=CaseStatus.PLANNING,
-                priority=VisaPriority.LOW,
+                priority=PetitionPriority.LOW,
                 case_started_date=None,
                 target_completion_date=date(2026, 6, 30),
                 case_completed_date=None,
@@ -352,6 +402,11 @@ def seed_case_groups():
         db.commit()
         print(f"\n✅ ASSESS case groups seeded successfully!")
         print(f"   Case groups created: {case_groups_created}")
+        print(f"   Breakdown:")
+        print(f"     - 4 COMPLETED (Gerrit, Bhaskaran, Arnaud, Victor - all have LPR)")
+        print(f"     - 6 IN_PROGRESS PM_APPROVED (Luis, Kiran, David Craig, Jacob, Georgios, Timothy)")
+        print(f"     - 1 PENDING_PM_APPROVAL (Brandon)")
+        print(f"     - 2 DRAFT (Tove, David Garcia Perez)")
         
     except Exception as e:
         db.rollback()

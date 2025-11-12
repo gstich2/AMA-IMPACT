@@ -1,11 +1,12 @@
 """
-Seed ASSESS visa applications and milestones (Step 3 of 3).
-Creates VisaApplication records and ApplicationMilestones for realistic case tracking.
+Seed ASSESS petitions and milestones (Step 3 of 3).
+Creates Petition records with complete petition sets (I-140 + I-485 + I-765 + I-131)
+and two-level Milestones (case-level + petition-level) for realistic case tracking.
 
 Run order:
 1. seed_assess_beneficiary_users.py
 2. seed_assess_case_groups.py
-3. seed_assess_visa_apps.py (this file)
+3. seed_assess_petitions.py (this file)
 
 Prerequisites:
 - seed_visa_types.py
@@ -21,20 +22,20 @@ from datetime import date
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from app.core.database import SessionLocal
-from app.models.visa import VisaApplication, VisaTypeEnum, VisaStatus, VisaCaseStatus, VisaPriority, VisaType
-from app.models.milestone import ApplicationMilestone, MilestoneType
+from app.models.petition import Petition, PetitionType, PetitionStatus, CaseStatus as PetitionCaseStatus, PetitionPriority
+from app.models.milestone import Milestone, MilestoneType, MilestoneStatus
 from app.models.case_group import CaseGroup
 from app.models.beneficiary import Beneficiary
 from app.models.user import User
 from app.models.law_firm import LawFirm
 
 
-def seed_assess_visa_apps():
-    """Seed ASSESS visa applications and milestones."""
+def seed_assess_petitions():
+    """Seed ASSESS petitions and milestones with complete petition sets."""
     db = SessionLocal()
     
     try:
-        print("\n📋 Seeding ASSESS visa applications and milestones...")
+        print("\n📋 Seeding ASSESS petitions and milestones...")
         
         # Get PM user for created_by and responsible_party
         pm_user = db.query(User).filter(User.email == "pm.assess@ama-impact.com").first()
@@ -44,24 +45,19 @@ def seed_assess_visa_apps():
         
         # Get law firm
         law_firm = db.query(LawFirm).filter(LawFirm.name.like("%Visa Law%")).first()
-        
-        # Get visa types
-        eb2niw_type = db.query(VisaType).filter(VisaType.code == "EB2NIW").first()
-        h1b_type = db.query(VisaType).filter(VisaType.code == "H1B").first()
-        tn_type = db.query(VisaType).filter(VisaType.code == "TN").first()
-        
-        if not eb2niw_type or not h1b_type or not tn_type:
-            print("   ❌ Required visa types not found! Run seed_visa_types.py first.")
-            return False
+        if not law_firm:
+            print("   ⚠️  No law firm found, petitions will not have law firm assigned")
         
         # Track created items
-        visa_apps_created = 0
+        petitions_created = 0
         milestones_created = 0
         
         # Get all case groups by case number for easy lookup
         case_groups = {}
         for cg in db.query(CaseGroup).all():
             case_groups[cg.case_number] = cg
+        
+        print(f"   ✓ Found {len(case_groups)} case groups")
         
         # ==========================================
         # COMPLETED CASES
