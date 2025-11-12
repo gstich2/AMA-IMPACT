@@ -181,16 +181,12 @@ This refactor affects **47+ backend files** and **6+ frontend files**. The scope
 #### 12. **backend/app/api/v1/audit_logs.py**
 - **Action**: UPDATE RESOURCE TYPE HANDLING
 - **Changes**:
-  ```python
-  # Add backward compatibility:
-  if resource_type == "visa_application":
-      # Also search for "petition" 
-      # Handle historical audit logs
-  ```
+  - Update all `resource_type = "visa_application"` → `"petition"`
   - Update resource activity queries
   - Update filtering logic
+  - **NO backward compatibility needed** (alpha stage, no production data)
 - **Impact**: Audit trail queries, compliance reports
-- **Risk**: **MEDIUM** (need backward compat)
+- **Risk**: **LOW** (clean break, no legacy data)
 
 #### 13. **backend/app/api/v1/reports.py**
 - **Action**: UPDATE ALL REPORT QUERIES
@@ -258,10 +254,10 @@ This refactor affects **47+ backend files** and **6+ frontend files**. The scope
 - **Risk**: **MEDIUM**
 
 #### 19. **backend/app/services/audit_service.py** (if exists)
-- **Action**: ADD BACKWARD COMPATIBILITY
-- **Changes**: Handle both "visa_application" and "petition" resource types
+- **Action**: UPDATE RESOURCE TYPE
+- **Changes**: Replace all `"visa_application"` → `"petition"`
 - **Impact**: Audit log queries
-- **Risk**: **LOW-MEDIUM**
+- **Risk**: **LOW** (clean break)
 
 ---
 
@@ -441,11 +437,10 @@ All seed scripts need updates:
 - **Files**: `audit.py`, `audit_logs.py`, `audit_service.py`
 - **Impact**: All audit logs reference `resource_type = "visa_application"`
 - **Changes Needed**:
-  - Add backward compatibility for historical logs
-  - Update new logs to use `resource_type = "petition"`
-  - Update queries to search both types during transition
-- **Data Migration**: Consider script to update historical audit logs
-- **Risk**: **MEDIUM** - Need to preserve audit trail
+  - Update all logs to use `resource_type = "petition"`
+  - Clean break - no backward compatibility needed (alpha stage)
+- **Data Migration**: None needed (fresh database on each reset)
+- **Risk**: **LOW** - Clean break, no legacy data
 
 ### 2. **Reporting System**
 - **Files**: `reports.py`, `reports_service.py`, `dashboard.py`
@@ -664,17 +659,19 @@ All seed scripts need updates:
 
 | Phase | Tasks | Estimated Hours |
 |-------|-------|-----------------|
-| Preparation | Documentation, planning | 4 hours |
-| Backend Models | 8 files | 8 hours |
+| Preparation | Documentation, planning | 2 hours (reduced) |
+| Backend Models | 8 files | 6 hours (reduced) |
 | Backend Config | 1 file + YAML system | 4 hours |
-| Backend Services | 3 files | 6 hours |
-| Backend APIs | 6 files | 10 hours |
+| Backend Services | 3 files | 4 hours (reduced) |
+| Backend APIs | 6 files | 8 hours (reduced) |
 | Seed Scripts | 11 files | 8 hours |
 | Frontend | 6 files | 6 hours |
 | Testing | Comprehensive | 8 hours |
-| **TOTAL** | **47+ files** | **54 hours** |
+| **TOTAL** | **47+ files** | **46 hours** |
 
-**Timeline**: 7 days with focused work
+**Timeline**: 6 days with focused work
+
+**Note**: Reduced from 54 hours because no backward compatibility needed (alpha stage)
 
 ---
 
