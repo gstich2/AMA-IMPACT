@@ -31,7 +31,7 @@ class Todo(Base):
     """
     Todo/Task model for tracking action items.
     
-    Denormalized design: If visa_application_id is set, case_group_id and beneficiary_id
+    Denormalized design: If petition_id is set, case_group_id and beneficiary_id
     are automatically populated for faster queries. If case_group_id is set, beneficiary_id
     is populated. This allows efficient filtering at any level.
     """
@@ -50,9 +50,9 @@ class Todo(Base):
     
     # Hierarchical associations (denormalized for query performance)
     # All three can be NULL for general todos not tied to a specific case
-    # If visa_application_id is set, case_group_id and beneficiary_id are auto-populated
+    # If petition_id is set, case_group_id and beneficiary_id are auto-populated
     # If case_group_id is set, beneficiary_id is auto-populated
-    visa_application_id = Column(String(36), ForeignKey("visa_applications.id"), nullable=True, index=True)
+    petition_id = Column(String(36), ForeignKey("petitions.id"), nullable=True, index=True)
     case_group_id = Column(String(36), ForeignKey("case_groups.id"), nullable=True, index=True)
     beneficiary_id = Column(String(36), ForeignKey("beneficiaries.id"), nullable=True, index=True)
     
@@ -71,7 +71,7 @@ class Todo(Base):
     # Relationships
     assigned_to = relationship("User", foreign_keys=[assigned_to_user_id], backref="assigned_todos", lazy="select")
     created_by = relationship("User", foreign_keys=[created_by_user_id], backref="created_todos", lazy="select")
-    visa_application = relationship("VisaApplication", back_populates="todos", lazy="select")
+    petition = relationship("Petition", back_populates="todos", lazy="select")
     case_group = relationship("CaseGroup", back_populates="todos", lazy="select")
     beneficiary = relationship("Beneficiary", back_populates="todos", lazy="select")
     

@@ -54,7 +54,7 @@ class Beneficiary(Base):
     
     # Relationships
     user = relationship("User", back_populates="beneficiary", uselist=False)
-    visa_applications = relationship("VisaApplication", back_populates="beneficiary", cascade="all, delete-orphan")
+    petitions = relationship("Petition", back_populates="beneficiary", cascade="all, delete-orphan")
     dependents = relationship("Dependent", back_populates="beneficiary", cascade="all, delete-orphan")
     case_groups = relationship("CaseGroup", back_populates="beneficiary", cascade="all, delete-orphan")
     todos = relationship("Todo", back_populates="beneficiary", cascade="all, delete-orphan")

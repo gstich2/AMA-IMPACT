@@ -52,6 +52,7 @@ class Dependent(Base):
     
     # Relationships
     beneficiary = relationship("Beneficiary", back_populates="dependents")
+    petitions = relationship("Petition", back_populates="dependent", cascade="all, delete-orphan")  # NEW: Derivative petitions
     
     def __repr__(self):
         return f"<Dependent {self.first_name} {self.last_name} ({self.relationship_type})>"

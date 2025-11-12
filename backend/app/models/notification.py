@@ -56,14 +56,14 @@ class EmailLog(Base):
     body = Column(Text, nullable=False)
     status = Column(Enum(EmailStatus), nullable=False, default=EmailStatus.QUEUED)
     error_message = Column(Text, nullable=True)
-    visa_application_id = Column(String(36), ForeignKey("visa_applications.id"), nullable=True)
+    petition_id = Column(String(36), ForeignKey("petitions.id"), nullable=True)
     sent_at = Column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     # Relationships
-    visa_application = relationship("VisaApplication", back_populates="email_logs")
+    petition = relationship("Petition", back_populates="email_logs")
     
     def __repr__(self):
         return f"<EmailLog {self.status} to {self.recipient_email}>"

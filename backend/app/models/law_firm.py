@@ -36,7 +36,7 @@ class LawFirm(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
-    applications = relationship("VisaApplication", back_populates="law_firm")
+    petitions = relationship("Petition", back_populates="law_firm")
     
     def __repr__(self):
         return f"<LawFirm {self.name}>"

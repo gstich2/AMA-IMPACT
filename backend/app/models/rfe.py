@@ -34,7 +34,7 @@ class RFETracking(Base):
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     
     # Foreign keys
-    visa_application_id = Column(String(36), ForeignKey("visa_applications.id"), nullable=False, index=True)
+    petition_id = Column(String(36), ForeignKey("petitions.id"), nullable=False, index=True)
     created_by = Column(String(36), ForeignKey("users.id"), nullable=False)
     
     # RFE details
@@ -58,7 +58,7 @@ class RFETracking(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
     # Relationships
-    visa_application = relationship("VisaApplication", back_populates="rfes")
+    petition = relationship("Petition", back_populates="rfes")
     creator = relationship("User")
     
     def __repr__(self):

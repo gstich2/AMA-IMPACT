@@ -65,7 +65,7 @@ class User(Base):
     department = relationship("Department", back_populates="users", foreign_keys=[department_id], lazy="select")
     reports_to = relationship("User", remote_side=[id], backref="direct_reports", lazy="select")
     beneficiary = relationship("Beneficiary", back_populates="user", uselist=False, lazy="select")
-    created_visa_applications = relationship("VisaApplication", foreign_keys="VisaApplication.created_by", back_populates="creator", lazy="select")
+    created_petitions = relationship("Petition", foreign_keys="Petition.created_by", back_populates="creator", lazy="select")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan", lazy="select")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan", lazy="select")
     settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan", lazy="select")
