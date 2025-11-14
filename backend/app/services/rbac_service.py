@@ -18,7 +18,7 @@ from sqlalchemy import and_, or_
 from app.models.user import User, UserRole
 from app.models.beneficiary import Beneficiary
 from app.models.department import Department
-from app.models.visa import VisaApplication
+from app.models.petition import Petition
 from app.models.todo import Todo
 from app.models.case_group import CaseGroup
 
@@ -162,12 +162,12 @@ class RBACService:
             
         return reports
     
-    def apply_visa_application_filters(self, query):
+    def apply_petition_filters(self, query):
         """
-        Apply role-based filters to a VisaApplication query.
+        Apply role-based filters to a Petition query.
         
         Args:
-            query: SQLAlchemy query object for VisaApplication
+            query: SQLAlchemy query object for Petition
             
         Returns:
             Filtered query object

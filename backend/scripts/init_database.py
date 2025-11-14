@@ -32,9 +32,10 @@ from app.core.config import settings
 # Import all models to ensure they're registered with Base
 from app.models import (
     user, contract, department, beneficiary, dependent,
-    visa, law_firm, case_group, milestone, rfe,
-    audit, notification, settings as settings_model
+    petition, law_firm, case_group, milestone, rfe,
+    audit, notification, settings as settings_model, todo
 )
+# Note: visa module removed - replaced by petition module
 
 
 def reset_alembic():
@@ -238,7 +239,7 @@ Note: --reset-alembic is for development only. Production should use proper migr
         print("\n✅ Database initialized successfully!")
         print(f"   Database: {settings.DB_NAME}")
         print(f"\n   Next steps:")
-        print(f"   1. Run: python scripts/fixtures/seed_visa_types.py")
+        print(f"   1. Run: # NOTE: seed_visa_types.py removed - PetitionType is now an enum in the model")
         print(f"   2. Run: python scripts/fixtures/seed_contracts.py")
         print(f"   3. Run: python scripts/fixtures/seed_law_firms.py")
         print(f"   4. Run: python scripts/fixtures/seed_development_data.py")

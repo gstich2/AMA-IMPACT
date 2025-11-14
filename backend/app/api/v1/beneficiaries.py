@@ -22,7 +22,7 @@ def create_beneficiary(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Create a new beneficiary (foreign national with visa case).
+    Create a new beneficiary (foreign national with petition case).
     Requires: ADMIN, HR, PM, or MANAGER role.
     """
     # Check permissions

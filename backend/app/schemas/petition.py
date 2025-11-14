@@ -1,15 +1,15 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import date, datetime
-from app.models.visa import VisaTypeEnum, VisaStatus, VisaPriority, VisaCaseStatus
+from app.models.petition import PetitionType, PetitionStatus, PetitionPriority, CaseStatus
 
 
-class VisaApplicationBase(BaseModel):
-    """Base visa application schema."""
-    visa_type: VisaTypeEnum
-    status: VisaStatus = VisaStatus.DRAFT
-    case_status: VisaCaseStatus = VisaCaseStatus.ACTIVE
-    priority: VisaPriority = VisaPriority.MEDIUM
+class PetitionBase(BaseModel):
+    """Base petition schema."""
+    petition_type: PetitionType
+    status: PetitionStatus = PetitionStatus.DRAFT
+    case_status: CaseStatus = CaseStatus.ACTIVE
+    priority: PetitionPriority = PetitionPriority.MEDIUM
     
     # Case group (for multi-step visa cases like EB2)
     case_group_id: Optional[str] = None
@@ -24,7 +24,6 @@ class VisaApplicationBase(BaseModel):
     # USCIS tracking
     receipt_number: Optional[str] = Field(None, max_length=50)
     company_case_id: Optional[str] = Field(None, max_length=50)
-    petition_type: Optional[str] = Field(None, max_length=50)
     current_stage: Optional[str] = Field(None, max_length=100)
     
     # Law firm and attorney
@@ -50,18 +49,17 @@ class VisaApplicationBase(BaseModel):
     notes: Optional[str] = None
 
 
-class VisaApplicationCreate(VisaApplicationBase):
+class PetitionCreate(PetitionBase):
     """Schema for creating a visa application."""
     beneficiary_id: str
-    visa_type_id: str
 
 
-class VisaApplicationUpdate(BaseModel):
+class PetitionUpdate(BaseModel):
     """Schema for updating a visa application."""
-    visa_type: Optional[VisaTypeEnum] = None
-    status: Optional[VisaStatus] = None
-    case_status: Optional[VisaCaseStatus] = None
-    priority: Optional[VisaPriority] = None
+    petition_type: Optional[PetitionType] = None
+    status: Optional[PetitionStatus] = None
+    case_status: Optional[CaseStatus] = None
+    priority: Optional[PetitionPriority] = None
     
     # Case group (for multi-step visa cases like EB2)
     case_group_id: Optional[str] = None
@@ -76,7 +74,6 @@ class VisaApplicationUpdate(BaseModel):
     # USCIS tracking
     receipt_number: Optional[str] = Field(None, max_length=50)
     company_case_id: Optional[str] = Field(None, max_length=50)
-    petition_type: Optional[str] = Field(None, max_length=50)
     current_stage: Optional[str] = Field(None, max_length=100)
     
     # Law firm and attorney
@@ -103,16 +100,15 @@ class VisaApplicationUpdate(BaseModel):
     notes: Optional[str] = None
 
 
-class VisaApplication(VisaApplicationBase):
+class Petition(PetitionBase):
     """Public visa application schema."""
     model_config = ConfigDict(from_attributes=True)
     
     id: str
     beneficiary_id: str
-    visa_type_id: str
     case_group_id: Optional[str]
     created_by: str
-    case_status: VisaCaseStatus
+    case_status: CaseStatus
     is_active: bool
     created_at: datetime
     updated_at: datetime

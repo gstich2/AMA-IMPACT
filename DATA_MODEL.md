@@ -130,12 +130,12 @@ class Beneficiary:
 - **Visa Applications**: One-to-many (beneficiary can have multiple visas)
 - **Dependents**: One-to-many (beneficiary can have family members)
 
-### 5. Visa Application Model (`visa_applications`)
+### 5. Petition Model (`petitions`)
 
 **Purpose**: Core visa case tracking and management
 
 ```python
-class VisaApplication:
+class Petition:
     id: int                          # Primary key
     beneficiary_id: int              # FK to beneficiaries
     user_id: int                     # FK to users (case owner)
@@ -224,7 +224,7 @@ class Todo:
     description: str                 # Task details
     assigned_to_id: int              # FK to users
     created_by_id: int               # FK to users
-    visa_application_id: int         # FK to visa_applications (nullable)
+    visa_application_id: int         # FK to petitions (nullable)
     case_group_id: int               # FK to case_groups (nullable)
     beneficiary_id: int              # FK to beneficiaries (nullable)
     status: str                      # TODO, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED
@@ -397,15 +397,15 @@ graph TD
     Department --> User
     User --> User[Manager]
     User --> Beneficiary
-    Beneficiary --> VisaApplication
+    Beneficiary --> Petition
     Beneficiary --> CaseGroup
     Beneficiary --> Dependent
-    User --> VisaApplication[Owner]
-    CaseGroup --> VisaApplication
-    LawFirm --> VisaApplication
+    User --> Petition[Owner]
+    CaseGroup --> Petition
+    LawFirm --> Petition
     User --> Todo[Assigned]
     User --> Todo[Created]
-    VisaApplication --> Todo
+    Petition --> Todo
     CaseGroup --> Todo
     Beneficiary --> Todo
     User --> Notification
@@ -460,10 +460,10 @@ CREATE INDEX idx_users_contract ON users(contract_id);
 CREATE INDEX idx_users_manager ON users(manager_id);
 
 -- Visa application queries
-CREATE INDEX idx_visa_beneficiary ON visa_applications(beneficiary_id);
-CREATE INDEX idx_visa_user ON visa_applications(user_id);
-CREATE INDEX idx_visa_expiration ON visa_applications(end_date);
-CREATE INDEX idx_visa_status ON visa_applications(current_status);
+CREATE INDEX idx_visa_beneficiary ON petitions(beneficiary_id);
+CREATE INDEX idx_visa_user ON petitions(user_id);
+CREATE INDEX idx_visa_expiration ON petitions(end_date);
+CREATE INDEX idx_visa_status ON petitions(current_status);
 
 -- Todo performance
 CREATE INDEX idx_todos_assigned ON todos(assigned_to_id);
@@ -482,7 +482,7 @@ CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read);
 
 ## Migration History
 
-**v1.0**: Basic models (User, Contract, Department, Beneficiary, VisaApplication)
+**v1.0**: Basic models (User, Contract, Department, Beneficiary, Petition)
 **v2.0**: Added CaseGroup, Todo with computed metrics, enhanced relationships
 **v3.0**: Added Notification, AuditLog, Report models for enterprise features
 

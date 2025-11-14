@@ -33,16 +33,16 @@ Now let  me give you some information about visa cases that we can create:
 
 Brandon: In approval stage for EB2NIW PM has not yet approved. 
 David Craig Penner: PM has approved, HR has not yet scheduled meetings
-Timothy: In approval stage, PM has not yet approved. 
-Luis: Has an approved EB2NIW case and actually received his I-140 2 weeks ago
+Timothy: In approval stage, PM has approved. Will go forward with marriage based petition, make up data  
+Luis: Has an approved EB2NIW case and actually received his I-140 2 weeks ago, has started the I-485 paperwork now in collection 
 Kiran: Just filed his I140 
 Victor: Has a fully approved LPR got it throughj EB2-NIW so lets make up some steps. Dates in table give you some idea. rest make up
 Tove: She has a draft stage of an EB-2NIW application but not yet submitted for approval 
 Jacon: As mentioned before. He has an approved H1B application but HR has not scheduled meetings yet. 
 Georgios: Just got his PERM approved for his EB2 application , now in pipeline for preparing I-140 documents with Goel & Anderson law firm
 David Perez: In the pipeline for filing his EB2-NIW draft stage for approval for PM
-Bashkaran and Arnaud and Gerrit: As mentioned they have approved LPRS same as victor. 
-
+Bashkaran and Arnaud: As mentioned they have approved LPRS same as victor. 
+Gerrit-Daniel Stich: Did EB3 and has it approved. 
 
 
 If we need other data lets please make it up, but maybe the completely fake data we should keep in the top level dev seedingf script? Maybe clean up whats in that one as well. Just do what makes sense. For made up cases lets confirm first. If we have missing data in the ones I have give here lets make loghical dates up. 

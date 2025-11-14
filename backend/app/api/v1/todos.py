@@ -13,7 +13,7 @@ from app.core.database import get_db
 from app.core.security import get_current_active_user
 from app.models.user import User, UserRole
 from app.models.todo import Todo, TodoStatus, TodoPriority
-from app.models.visa import VisaApplication
+from app.models.petition import Petition
 from app.models.case_group import CaseGroup
 from app.models.beneficiary import Beneficiary
 from app.schemas.todo import TodoCreate, TodoUpdate, TodoResponse, TodoStats
@@ -96,7 +96,7 @@ def auto_populate_hierarchy(
     Returns: (visa_application_id, case_group_id, beneficiary_id)
     """
     if visa_application_id:
-        visa_app = db.query(VisaApplication).filter(VisaApplication.id == visa_application_id).first()
+        visa_app = db.query(Petition).filter(Petition.id == visa_application_id).first()
         if not visa_app:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -369,7 +369,7 @@ async def get_visa_application_todos(
     current_user: User = Depends(get_current_active_user)
 ):
     """Get all todos for a specific visa application."""
-    visa_app = db.query(VisaApplication).filter(VisaApplication.id == visa_application_id).first()
+    visa_app = db.query(Petition).filter(Petition.id == visa_application_id).first()
     if not visa_app:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

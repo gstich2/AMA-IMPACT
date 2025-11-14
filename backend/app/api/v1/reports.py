@@ -15,7 +15,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User, UserRole
 from app.schemas.reports import (
-    ReportRequest, ReportResponse, VisaStatusReport, UserActivityReport,
+    ReportRequest, ReportResponse, PetitionStatusReport, UserActivityReport,
     ComplianceReport, ExecutiveSummary, ReportFormat, ReportPeriod,
     ReportList, DashboardWidget
 )
@@ -148,7 +148,7 @@ async def generate_report(
     )
 
 
-@router.get("/visa-status", response_model=VisaStatusReport)
+@router.get("/visa-status", response_model=PetitionStatusReport)
 async def get_visa_status_report(
     period: ReportPeriod = Query(ReportPeriod.MONTHLY, description="Report period"),
     start_date: Optional[date] = Query(None, description="Custom start date (for custom period)"),

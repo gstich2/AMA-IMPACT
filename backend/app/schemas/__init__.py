@@ -7,9 +7,8 @@ from app.schemas.beneficiary import (
     BeneficiaryBase, BeneficiaryCreate, BeneficiaryUpdate, BeneficiaryResponse, BeneficiaryWithRelations
 )
 from app.schemas.contract import ContractBase, ContractCreate, ContractUpdate, Contract
-from app.schemas.visa import (
-    VisaApplicationBase, VisaApplicationCreate, VisaApplicationUpdate, VisaApplication,
-    VisaTypeBase, VisaTypeCreate, VisaType
+from app.schemas.petition import (
+    PetitionBase, PetitionCreate, PetitionUpdate, Petition,
 )
 from app.schemas.case_group import (
     CaseGroupBase, CaseGroupCreate, CaseGroupUpdate, CaseGroupResponse, CaseGroupWithApplications
@@ -31,8 +30,7 @@ __all__ = [
     # Contract schemas
     "ContractBase", "ContractCreate", "ContractUpdate", "Contract",
     # Visa schemas
-    "VisaApplicationBase", "VisaApplicationCreate", "VisaApplicationUpdate", "VisaApplication",
-    "VisaTypeBase", "VisaTypeCreate", "VisaType",
+    "PetitionBase", "PetitionCreate", "PetitionUpdate", "Petition",
     # Case group schemas
     "CaseGroupBase", "CaseGroupCreate", "CaseGroupUpdate", "CaseGroupResponse", "CaseGroupWithApplications",
     # Law firm schemas

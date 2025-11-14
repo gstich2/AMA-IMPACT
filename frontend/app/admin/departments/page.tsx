@@ -52,10 +52,10 @@ interface DepartmentStats {
   beneficiaries_total: number
   beneficiaries_active: number
   beneficiaries_inactive: number
-  visa_applications_total: number
-  visa_applications_active: number
-  visa_applications_by_status: Record<string, number>
-  visa_applications_by_type: Record<string, number>
+  petitions_total: number
+  petitions_active: number
+  petitions_by_status: Record<string, number>
+  petitions_by_type: Record<string, number>
   expiring_next_30_days: number
   expiring_next_90_days: number
   expired: number
@@ -443,17 +443,17 @@ export default function DepartmentsManagementPage() {
               {/* Visa Applications Count - Always show */}
               <div 
                 className={`flex items-center space-x-1 text-xs px-2 py-1 rounded cursor-help transition-colors ${
-                  stats.visa_applications_total > 0
+                  stats.petitions_total > 0
                     ? 'bg-purple-50 text-purple-700 hover:bg-purple-100'
                     : 'bg-gray-50 text-gray-400'
                 }`}
-                title={stats.visa_applications_total > 0 
-                  ? `Visa Applications: ${stats.visa_applications_total} total\n• ${stats.visa_applications_active} active${includesSubdepts ? '\n(includes all subdepartments)' : ''}\n\nBy Status:\n${Object.entries(stats.visa_applications_by_status).map(([status, count]) => `• ${status}: ${count}`).join('\n')}\n\nBy Type:\n${Object.entries(stats.visa_applications_by_type).map(([type, count]) => `• ${type}: ${count}`).join('\n')}`
+                title={stats.petitions_total > 0 
+                  ? `Visa Applications: ${stats.petitions_total} total\n• ${stats.petitions_active} active${includesSubdepts ? '\n(includes all subdepartments)' : ''}\n\nBy Status:\n${Object.entries(stats.petitions_by_status).map(([status, count]) => `• ${status}: ${count}`).join('\n')}\n\nBy Type:\n${Object.entries(stats.petitions_by_type).map(([type, count]) => `• ${type}: ${count}`).join('\n')}`
                   : `No visa applications${includesSubdepts ? ' (checked subdepartments)' : ''}`
                 }
               >
                 <FileText className="h-3 w-3" />
-                <span className="font-medium">{stats.visa_applications_total}</span>
+                <span className="font-medium">{stats.petitions_total}</span>
               </div>
               
               {/* Expiring Soon Warning - Always show */}

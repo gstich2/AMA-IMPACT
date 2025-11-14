@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.v1 import auth, users, beneficiaries, contracts, visa_applications, password, law_firms, dependents, case_groups, todos, departments, dashboard, notifications, audit_logs, reports
+from app.api.v1 import auth, users, beneficiaries, contracts, petitions, password, law_firms, dependents, case_groups, todos, departments, dashboard, notifications, audit_logs, reports
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -63,7 +63,7 @@ app.include_router(departments.router, prefix="/api/v1/departments", tags=["Depa
 app.include_router(beneficiaries.router, prefix="/api/v1/beneficiaries", tags=["Beneficiaries"])
 app.include_router(dependents.router, prefix="/api/v1/dependents", tags=["Dependents"])
 app.include_router(case_groups.router, prefix="/api/v1/case-groups", tags=["Case Groups"])
-app.include_router(visa_applications.router, prefix="/api/v1/visa-applications", tags=["Visa Applications"])
+app.include_router(petitions.router, prefix="/api/v1/petitions", tags=["Petitions"])
 app.include_router(todos.router, prefix="/api/v1/todos", tags=["Todos"])
 app.include_router(law_firms.router, prefix="/api/v1/law-firms", tags=["Law Firms"])
 

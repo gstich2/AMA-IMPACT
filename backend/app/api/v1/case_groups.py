@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 
 from app.core.database import get_db
 from app.core.security import get_current_active_user
-from app.models.case_group import CaseGroup, CaseType
+from app.models.case_group import CaseGroup, PathwayType
 from app.models.user import User, UserRole
 from app.models.beneficiary import Beneficiary
 from app.models.department import Department
@@ -98,7 +98,7 @@ def list_case_groups(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     beneficiary_id: Optional[str] = None,
-    case_type: Optional[CaseType] = None,
+    case_type: Optional[PathwayType] = None,
     status: Optional[str] = None,
     approval_status: Optional[str] = None,
     responsible_party_id: Optional[str] = None,
@@ -172,7 +172,7 @@ def get_case_group(
     case_group = (
         db.query(CaseGroup)
         .options(
-            joinedload(CaseGroup.applications),
+            joinedload(CaseGroup.petitions),
             joinedload(CaseGroup.beneficiary).joinedload(Beneficiary.user).joinedload(User.department),
             joinedload(CaseGroup.beneficiary).joinedload(Beneficiary.user).joinedload(User.reports_to),
             joinedload(CaseGroup.responsible_party).joinedload(User.department),
@@ -324,7 +324,7 @@ def delete_case_group(
     case_group.is_deleted = True
     
     # Unlink applications from this case group
-    for app in case_group.applications:
+    for app in case_group.petitions:
         app.case_group_id = None
     
     db.commit()
@@ -719,9 +719,9 @@ def get_case_group_timeline(
     Returns events sorted by timestamp (most recent first).
     """
     from app.models.audit import AuditLog
-    from app.models.milestone import ApplicationMilestone
+    from app.models.milestone import Milestone
     from app.models.todo import Todo
-    from app.models.visa import VisaApplication
+    from app.models.petition import Petition
     
     # Verify case group exists and user has access
     case_group = db.query(CaseGroup).filter(CaseGroup.id == case_group_id).first()
@@ -811,32 +811,35 @@ def get_case_group_timeline(
         ))
     
     # 2. Get milestones from all visa applications in this case group
-    visa_app_ids = [app.id for app in case_group.applications]
-    if visa_app_ids:
+    petition_app_ids = [app.id for app in case_group.petitions]
+    if petition_app_ids:
         milestones = (
-            db.query(ApplicationMilestone)
-            .filter(ApplicationMilestone.visa_application_id.in_(visa_app_ids))
+            db.query(Milestone)
+            .filter(Milestone.petition_id.in_(petition_app_ids))
             .all()
         )
         
         for milestone in milestones:
             # Get visa application to show which application this milestone belongs to
-            visa_app = db.query(VisaApplication).filter(VisaApplication.id == milestone.visa_application_id).first()
+            petition_app = db.query(Petition).filter(Petition.id == milestone.petition_id).first()
+            
+            # Skip milestones without a completed_date
+            if not milestone.completed_date:
+                continue
             
             events.append(TimelineEvent(
                 id=milestone.id,
                 event_type=TimelineEventType.MILESTONE,
-                timestamp=datetime.combine(milestone.milestone_date, datetime.min.time()),
+                timestamp=datetime.combine(milestone.completed_date, datetime.min.time()),
                 user_id=milestone.created_by,
                 user_name=milestone.creator.full_name if milestone.creator else None,
                 user_email=milestone.creator.email if milestone.creator else None,
                 title=f"Milestone: {milestone.milestone_type.value.replace('_', ' ').title()}",
                 description=milestone.description or (milestone.title if milestone.title else None),
                 milestone_type=milestone.milestone_type.value,
-                milestone_date=milestone.milestone_date,
+                milestone_date=milestone.completed_date,
                 details={
-                    "visa_application_type": visa_app.visa_type.value if visa_app else None,
-                    "petition_type": visa_app.petition_type if visa_app else None,
+                    "petition_type": petition_app.petition_type.value if petition_app else None,
                 }
             ))
     
@@ -884,21 +887,21 @@ def get_case_group_progress(
     """
     Calculate progress for ALL visa applications in a case group.
     
-    Each visa application has its own pipeline based on visa_type.
+    Each visa application has its own pipeline based on petition_type.
     Case group progress is the aggregate of all visa application progresses.
     
     Returns:
-    - overall_percentage: Overall case group progress (weighted average of all visas)
+    - overall_percentage: Overall case group progress (weighted average of all petitions)
     - overall_stage: Description of overall case status
-    - visa_applications: Array of visa apps with individual progress and pipelines
+    - petitions: Array of visa apps with individual progress and pipelines
     
     Permissions:
     - BENEFICIARY: Can view their own case group progress
     - PM/HR/MANAGER: Can view case groups in their contract
     - ADMIN: Can view any case group progress
     """
-    from app.config.visa_pipelines import get_pipeline_for_visa_type
-    from app.models.milestone import ApplicationMilestone
+    from app.config.petition_pipelines import get_pipeline_for_petition_type
+    from app.models.milestone import Milestone
     
     # Get case group and check permissions
     case_group = db.query(CaseGroup).filter(CaseGroup.id == case_group_id).first()
@@ -932,25 +935,25 @@ def get_case_group_progress(
             )
     # ADMIN can view all
     
-    if not case_group.applications:
+    if not case_group.petitions:
         return {
             "case_group_id": case_group_id,
             "overall_percentage": 0,
             "overall_stage": "No visa applications",
-            "visa_applications": []
+            "petitions": []
         }
     
     visa_progress_list = []
     total_progress = 0
     
     # Calculate progress for EACH visa application
-    for visa_app in case_group.applications:
+    for petition_app in case_group.petitions:
         # Get pipeline config for THIS visa type
-        pipeline_config = get_pipeline_for_visa_type(visa_app.visa_type)
+        pipeline_config = get_pipeline_for_petition_type(petition_app.petition_type)
         
         # Get milestones for THIS visa application only
-        milestones = db.query(ApplicationMilestone).filter(
-            ApplicationMilestone.visa_application_id == visa_app.id
+        milestones = db.query(Milestone).filter(
+            Milestone.petition_id == petition_app.id
         ).all()
         
         # Build set of completed milestone types
@@ -975,7 +978,7 @@ def get_case_group_progress(
             if is_completed:
                 for m in milestones:
                     if m.milestone_type == milestone_type:
-                        completion_date = m.milestone_date.isoformat()
+                        completion_date = m.completed_date.isoformat() if m.completed_date else None
                         break
             
             pipeline_with_status.append({
@@ -995,11 +998,10 @@ def get_case_group_progress(
                 next_stage = stage["label"]
         
         visa_progress_list.append({
-            "visa_application_id": visa_app.id,
-            "visa_type": visa_app.visa_type.value,
-            "petition_type": visa_app.petition_type,
-            "visa_status": visa_app.status.value if visa_app.status else None,
-            "case_status": visa_app.case_status.value if visa_app.case_status else None,
+            "petition_id": petition_app.id,
+            "petition_type": petition_app.petition_type.value,
+            "visa_status": petition_app.status.value if petition_app.status else None,
+            "case_status": petition_app.case_status.value if petition_app.case_status else None,
             "percentage": max_weight,
             "current_stage": current_stage_label,
             "next_stage": next_stage,
@@ -1010,7 +1012,7 @@ def get_case_group_progress(
         total_progress += max_weight
     
     # Overall case group progress = average of all visa apps
-    overall_percentage = total_progress // len(case_group.applications) if case_group.applications else 0
+    overall_percentage = total_progress // len(case_group.petitions) if case_group.petitions else 0
     
     # Determine overall stage description
     if overall_percentage == 100:
@@ -1028,5 +1030,5 @@ def get_case_group_progress(
         "case_group_id": case_group_id,
         "overall_percentage": overall_percentage,
         "overall_stage": overall_stage,
-        "visa_applications": visa_progress_list,
+        "petitions": visa_progress_list,
     }

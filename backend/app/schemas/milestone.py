@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 class ApplicationMilestoneBase(BaseModel):
     """Base schema for application milestone."""
-    visa_application_id: str
+    petition_id: str
     milestone_type: str  # case_opened, filed, rfe_received, approved, etc.
     milestone_date: date
     title: Optional[str] = Field(None, max_length=255)

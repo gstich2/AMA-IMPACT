@@ -4,8 +4,8 @@ from pydantic import BaseModel, Field, ConfigDict, computed_field
 from typing import Optional, List, Any
 from datetime import date, datetime
 
-from app.models.case_group import CaseType, CaseStatus, ApprovalStatus
-from app.models.visa import VisaPriority
+from app.models.case_group import PathwayType, CaseStatus, ApprovalStatus
+from app.models.petition import PetitionPriority
 
 
 # Import beneficiary and user schemas for nested responses
@@ -73,10 +73,10 @@ class ResponsiblePartyInResponse(BaseModel):
 
 class CaseGroupBase(BaseModel):
     """Base schema for CaseGroup."""
-    case_type: CaseType = Field(..., description="Type of visa case")
+    pathway_type: PathwayType = Field(..., description="Type of visa case")
     case_number: Optional[str] = Field(None, max_length=50, description="Internal tracking number")
     status: CaseStatus = Field(CaseStatus.PLANNING, description="Overall case status")
-    priority: VisaPriority = Field(VisaPriority.MEDIUM, description="Case priority")
+    priority: PetitionPriority = Field(PetitionPriority.MEDIUM, description="Case priority")
     case_started_date: Optional[date] = Field(None, description="When case work began")
     target_completion_date: Optional[date] = Field(None, description="Target completion date")
     case_completed_date: Optional[date] = Field(None, description="When case was completed")
@@ -92,10 +92,10 @@ class CaseGroupCreate(CaseGroupBase):
 
 class CaseGroupUpdate(BaseModel):
     """Schema for updating a CaseGroup."""
-    case_type: Optional[CaseType] = None
+    pathway_type: Optional[PathwayType] = None
     case_number: Optional[str] = Field(None, max_length=50)
     status: Optional[CaseStatus] = None
-    priority: Optional[VisaPriority] = None
+    priority: Optional[PetitionPriority] = None
     case_started_date: Optional[date] = None
     target_completion_date: Optional[date] = None
     case_completed_date: Optional[date] = None
@@ -136,12 +136,11 @@ class CaseGroupResponse(CaseGroupBase):
         return None
 
 
-class VisaApplicationInResponse(BaseModel):
-    """Minimal visa application info for nested responses."""
+class PetitionInResponse(BaseModel):
+    """Minimal petition info for nested responses."""
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
     id: str
-    visa_type: str
-    petition_type: Optional[str] = None
+    petition_type: str
     status: str
     receipt_number: Optional[str] = None
     filing_date: Optional[date] = None
@@ -149,10 +148,10 @@ class VisaApplicationInResponse(BaseModel):
 
 
 class CaseGroupWithApplications(CaseGroupResponse):
-    """Schema for CaseGroup with related visa applications."""
+    """Schema for CaseGroup with related petitions."""
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
     
-    applications: List[VisaApplicationInResponse] = []
+    petitions: List[PetitionInResponse] = []
 
 
 class CaseGroupSubmitForApproval(BaseModel):

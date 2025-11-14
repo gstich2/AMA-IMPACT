@@ -14,7 +14,7 @@ python scripts/setup_dev_environment.py
 
 This runs:
 1. `init_database.py` - Creates schema + admin user
-2. `seed_visa_types.py` - Loads visa type reference data
+2. `REMOVED - PetitionType is now an enum` - Loads visa type reference data
 3. `seed_contracts.py` - Creates ASSESS & RSES contracts
 4. `seed_law_firms.py` - Adds law firms (Jackson Lewis, Goel And Anderson)
 5. `seed_development_data.py` - Loads realistic test users, beneficiaries, visas, case groups, todos
@@ -27,7 +27,7 @@ cd backend
 python scripts/init_database.py
 
 # Load fixtures individually
-python scripts/fixtures/seed_visa_types.py
+python scripts/fixtures/REMOVED - PetitionType is now an enum
 python scripts/fixtures/seed_contracts.py
 python scripts/fixtures/seed_law_firms.py
 python scripts/fixtures/seed_development_data.py
@@ -135,7 +135,7 @@ Loads comprehensive ASSESS contract data with real employee visa cases (developm
   - **Y (Aeroflightdynamics Directorate - US Army)** - Parent department
     - YA (Computational Aeromechanics Tech Area) - Shirzad Hoseinverdy
 - Creates PM user and 6 branch managers
-- Beneficiaries, case groups, and visa applications are seeded separately (see below)
+- Beneficiaries, case groups, and petitions are seeded separately (see below)
 
 **Test Accounts:**
 - `pm.assess@ama-impact.com` - Project Manager (Dave Cornelius) - manages TS division
@@ -172,7 +172,7 @@ scripts/
 ├── start_server.sh               # Start API server
 └── fixtures/
     ├── README.md                 # Fixtures documentation
-    ├── seed_visa_types.py        # Reference data: Visa types
+    ├── REMOVED - PetitionType is now an enum        # Reference data: Visa types
     ├── seed_contracts.py         # ASSESS & RSES contracts
     ├── seed_law_firms.py         # Immigration law firms
     └── seed_development_data.py  # Realistic test data (users, visas, case groups, todos)
@@ -222,7 +222,7 @@ python scripts/init_database.py --reset-alembic
 **Load fixtures individually:**
 ```bash
 cd backend
-python scripts/fixtures/seed_visa_types.py
+python scripts/fixtures/REMOVED - PetitionType is now an enum
 python scripts/fixtures/seed_contracts.py
 python scripts/fixtures/seed_law_firms.py
 python scripts/fixtures/seed_development_data.py

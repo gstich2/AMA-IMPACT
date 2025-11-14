@@ -73,7 +73,6 @@ def seed_assess_petitions():
             case_milestones = [
                 (MilestoneType.CASE_OPENED, date(2017, 6, 15), "Case opened - EB3-PERM pathway initiated"),
                 (MilestoneType.STRATEGY_MEETING, date(2017, 7, 1), "Strategy meeting with attorney"),
-                (MilestoneType.ATTORNEY_ENGAGEMENT, date(2017, 7, 15), "Engaged Visa Law Group for representation"),
             ]
             for m_type, m_date, m_desc in case_milestones:
                 milestone = Milestone(
@@ -81,7 +80,7 @@ def seed_assess_petitions():
                     petition_id=None,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -91,13 +90,13 @@ def seed_assess_petitions():
             # H1B (2017-2021) - prerequisite before EB3
             h1b = Petition(
                 beneficiary_id=cg.beneficiary_id,
-                case_group_id=None,  # Standalone, not part of EB3 case group
+                case_group_id=cg.id,  # Part of the same case group (prerequisite)
                 created_by=pm_user.id,
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I129,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.MEDIUM,
                 filing_date=date(2017, 3, 1),
                 approval_date=date(2017, 5, 15),
@@ -117,8 +116,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.PERM,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.HIGH,
                 filing_date=date(2018, 3, 1),
                 approval_date=date(2019, 8, 15),
@@ -141,7 +140,7 @@ def seed_assess_petitions():
                     petition_id=perm.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -156,8 +155,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.HIGH,
                 filing_date=date(2019, 10, 1),
                 approval_date=date(2020, 3, 15),
@@ -179,7 +178,7 @@ def seed_assess_petitions():
                     petition_id=i140.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -194,8 +193,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I485,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.HIGH,
                 filing_date=date(2020, 6, 1),
                 approval_date=date(2021, 10, 15),
@@ -210,7 +209,7 @@ def seed_assess_petitions():
             i485_milestones = [
                 (MilestoneType.I485_FILED, date(2020, 6, 1), "I-485 filed"),
                 (MilestoneType.BIOMETRICS_COMPLETED, date(2020, 9, 15), "Biometrics completed"),
-                (MilestoneType.I485_INTERVIEW, date(2021, 8, 10), "I-485 interview completed"),
+                (MilestoneType.INTERVIEW_COMPLETED, date(2021, 8, 10), "I-485 interview completed"),
                 (MilestoneType.I485_APPROVED, date(2021, 10, 15), "I-485 approved"),
                 (MilestoneType.GREEN_CARD_RECEIVED, date(2021, 11, 1), "Green card received in mail"),
             ]
@@ -220,7 +219,7 @@ def seed_assess_petitions():
                     petition_id=i485.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -244,7 +243,7 @@ def seed_assess_petitions():
                     petition_id=None,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -259,8 +258,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.MEDIUM,
                 filing_date=date(2018, 1, 15),
                 approval_date=date(2018, 6, 10),
@@ -282,7 +281,7 @@ def seed_assess_petitions():
                     petition_id=i140.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -297,8 +296,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I485,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.MEDIUM,
                 filing_date=date(2018, 11, 1),
                 approval_date=date(2019, 11, 20),
@@ -322,7 +321,7 @@ def seed_assess_petitions():
                     petition_id=i485.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -345,7 +344,7 @@ def seed_assess_petitions():
                     petition_id=None,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -360,8 +359,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.MEDIUM,
                 filing_date=date(2019, 7, 1),
                 approval_date=date(2020, 1, 10),
@@ -383,7 +382,7 @@ def seed_assess_petitions():
                     petition_id=i140.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -398,8 +397,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I485,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.MEDIUM,
                 filing_date=date(2020, 6, 1),
                 approval_date=date(2021, 5, 30),
@@ -423,7 +422,7 @@ def seed_assess_petitions():
                     petition_id=i485.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -446,7 +445,7 @@ def seed_assess_petitions():
                     petition_id=None,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -461,8 +460,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.MEDIUM,
                 filing_date=date(2022, 5, 1),
                 approval_date=date(2022, 10, 15),
@@ -484,7 +483,7 @@ def seed_assess_petitions():
                     petition_id=i140.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -499,8 +498,8 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I485,
-                petition_status=PetitionStatus.APPROVED,
-                case_status=PetitionCaseStatus.COMPLETED,
+                status=PetitionStatus.APPROVED,
+                case_status=PetitionCaseStatus.FINALIZED,
                 priority=PetitionPriority.MEDIUM,
                 filing_date=date(2022, 11, 1),
                 approval_date=date(2023, 1, 15),
@@ -524,7 +523,7 @@ def seed_assess_petitions():
                     petition_id=i485.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -551,7 +550,7 @@ def seed_assess_petitions():
                     petition_id=None,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -566,7 +565,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.APPROVED,
+                status=PetitionStatus.APPROVED,
                 case_status=PetitionCaseStatus.ACTIVE,
                 priority=PetitionPriority.HIGH,
                 filing_date=date(2024, 9, 15),
@@ -589,7 +588,7 @@ def seed_assess_petitions():
                     petition_id=i140.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -604,7 +603,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I485,
-                petition_status=PetitionStatus.IN_PREPARATION,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.ACTIVE,
                 priority=PetitionPriority.HIGH,
                 notes="Collecting documents for I-485 filing"
@@ -621,7 +620,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I765,
-                petition_status=PetitionStatus.IN_PREPARATION,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.ACTIVE,
                 priority=PetitionPriority.MEDIUM,
                 notes="Will file concurrent with I-485"
@@ -638,7 +637,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I131,
-                petition_status=PetitionStatus.IN_PREPARATION,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.ACTIVE,
                 priority=PetitionPriority.MEDIUM,
                 notes="Will file concurrent with I-485"
@@ -663,7 +662,7 @@ def seed_assess_petitions():
                     petition_id=None,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -678,7 +677,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.FILED,
+                status=PetitionStatus.SUBMITTED,
                 case_status=PetitionCaseStatus.ACTIVE,
                 priority=PetitionPriority.HIGH,
                 filing_date=date(2024, 11, 1),
@@ -699,7 +698,7 @@ def seed_assess_petitions():
                     petition_id=i140.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -719,7 +718,7 @@ def seed_assess_petitions():
                 created_by=pm_user.id,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.TN_APPLICATION,
-                petition_status=PetitionStatus.DRAFT,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.UPCOMING,
                 priority=PetitionPriority.MEDIUM,
                 notes="PM approved on Oct 1, 2024. Waiting for HR to schedule initial meeting."
@@ -742,7 +741,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I129,
-                petition_status=PetitionStatus.DRAFT,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.UPCOMING,
                 priority=PetitionPriority.HIGH,
                 notes="H1B for new hire. PM approved Sep 15, 2024. Awaiting HR onboarding."
@@ -767,7 +766,7 @@ def seed_assess_petitions():
                     petition_id=None,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -782,7 +781,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.PERM,
-                petition_status=PetitionStatus.APPROVED,
+                status=PetitionStatus.APPROVED,
                 case_status=PetitionCaseStatus.ACTIVE,
                 priority=PetitionPriority.HIGH,
                 filing_date=date(2024, 3, 1),
@@ -805,7 +804,7 @@ def seed_assess_petitions():
                     petition_id=perm.id,
                     created_by=pm_user.id,
                     milestone_type=m_type,
-                    milestone_date=m_date,
+                    completed_date=m_date,
                     status=MilestoneStatus.COMPLETED,
                     description=m_desc
                 )
@@ -820,7 +819,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.IN_PREPARATION,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.ACTIVE,
                 priority=PetitionPriority.HIGH,
                 notes="Preparing I-140 documents with Goel & Anderson"
@@ -843,7 +842,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I130,
-                petition_status=PetitionStatus.DRAFT,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.UPCOMING,
                 priority=PetitionPriority.MEDIUM,
                 notes="I-130 for marriage-based green card. PM approved Oct 30, 2024."
@@ -860,7 +859,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I485,
-                petition_status=PetitionStatus.DRAFT,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.UPCOMING,
                 priority=PetitionPriority.MEDIUM,
                 notes="Will file concurrent with I-130"
@@ -887,7 +886,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.DRAFT,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.UPCOMING,
                 priority=PetitionPriority.MEDIUM,
                 notes="EB2-NIW case submitted for PM approval on Oct 25, 2024. Awaiting decision."
@@ -914,7 +913,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.DRAFT,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.UPCOMING,
                 priority=PetitionPriority.LOW,
                 notes="Draft EB2-NIW case. Initial assessment in progress."
@@ -937,7 +936,7 @@ def seed_assess_petitions():
                 law_firm_id=law_firm.id if law_firm else None,
                 responsible_party_id=pm_user.id,
                 petition_type=PetitionType.I140,
-                petition_status=PetitionStatus.DRAFT,
+                status=PetitionStatus.DRAFT,
                 case_status=PetitionCaseStatus.UPCOMING,
                 priority=PetitionPriority.LOW,
                 notes="Draft EB2-NIW case. Initial assessment in progress."

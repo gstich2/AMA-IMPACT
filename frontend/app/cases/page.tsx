@@ -44,7 +44,7 @@ import {
 interface CaseGroup {
   id: string
   case_number: string
-  case_type: string
+  pathway_type: string
   status: string
   priority: string
   approval_status: string
@@ -72,7 +72,7 @@ interface CaseGroup {
   attorney_portal_link?: string
 }
 
-type SortableColumn = 'case_number' | 'beneficiary' | 'case_type' | 'status' | 'approval_status' | 'priority' | 'case_started_date' | 'target_completion_date' | 'department' | 'assigned_to' | 'law_firm'
+type SortableColumn = 'case_number' | 'beneficiary' | 'pathway_type' | 'status' | 'approval_status' | 'priority' | 'case_started_date' | 'target_completion_date' | 'department' | 'assigned_to' | 'law_firm'
 
 export default function CasesPage() {
   const router = useRouter()
@@ -121,7 +121,7 @@ export default function CasesPage() {
       setCaseGroups(casesResponse)
       
       // Extract unique case types from loaded data
-      const uniqueCaseTypes = [...new Set(casesResponse.map((c: CaseGroup) => c.case_type).filter(Boolean))].sort() as string[]
+      const uniqueCaseTypes = [...new Set(casesResponse.map((c: CaseGroup) => c.pathway_type).filter(Boolean))].sort() as string[]
       setAvailableCaseTypes(uniqueCaseTypes)
     } catch (error) {
       console.error('Error loading cases:', error)
@@ -169,7 +169,7 @@ export default function CasesPage() {
       caseGroup.beneficiary?.user?.email?.toLowerCase().includes(searchTerm.toLowerCase())
     
     const matchesStatus = selectedStatuses.length === 0 || selectedStatuses.includes(caseGroup.status)
-    const matchesCaseType = selectedCaseTypes.length === 0 || selectedCaseTypes.includes(caseGroup.case_type)
+    const matchesCaseType = selectedCaseTypes.length === 0 || selectedCaseTypes.includes(caseGroup.pathway_type)
     const matchesApprovalStatus = selectedApprovalStatuses.length === 0 || selectedApprovalStatuses.includes(caseGroup.approval_status)
     const matchesPriority = selectedPriorities.length === 0 || selectedPriorities.includes(caseGroup.priority)
     
@@ -211,9 +211,9 @@ export default function CasesPage() {
         aValue = a.beneficiary ? `${a.beneficiary.first_name} ${a.beneficiary.last_name}` : ''
         bValue = b.beneficiary ? `${b.beneficiary.first_name} ${b.beneficiary.last_name}` : ''
         break
-      case 'case_type':
-        aValue = a.case_type || ''
-        bValue = b.case_type || ''
+      case 'pathway_type':
+        aValue = a.pathway_type || ''
+        bValue = b.pathway_type || ''
         break
       case 'status':
         aValue = a.status || ''
@@ -853,10 +853,10 @@ export default function CasesPage() {
                           {getSortIcon('department')}
                         </div>
                       </TableHead>
-                      <TableHead className="cursor-pointer" onClick={() => handleSort('case_type')}>
+                      <TableHead className="cursor-pointer" onClick={() => handleSort('pathway_type')}>
                         <div className="flex items-center">
                           Case Type
-                          {getSortIcon('case_type')}
+                          {getSortIcon('pathway_type')}
                         </div>
                       </TableHead>
                       <TableHead className="cursor-pointer" onClick={() => handleSort('status')}>
@@ -926,7 +926,7 @@ export default function CasesPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline">
-                            {getCaseTypeLabel(caseGroup.case_type)}
+                            {getCaseTypeLabel(caseGroup.pathway_type)}
                           </Badge>
                         </TableCell>
                         <TableCell>{getStatusBadge(caseGroup.status)}</TableCell>

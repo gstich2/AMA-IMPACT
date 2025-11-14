@@ -19,7 +19,7 @@ A comprehensive FastAPI + Next.js application for tracking and managing foreign 
 
 ## ✨ What's New in v2.0
 
-- 🗂️ **Case Groups**: Organize related visa applications into immigration pathways
+- 🗂️ **Case Groups**: Organize related petitions into immigration pathways
 - ✅ **Todo System**: Task tracking with computed metrics (overdue status, completion time)
 - � **Role-Based User Creation**: Enhanced security with permission controls
 - 📚 **Complete Documentation**: MkDocs site with comprehensive guides
@@ -85,7 +85,7 @@ AMA-IMPACT/
 │   │   │   ├── auth.py         # Authentication & JWT management
 │   │   │   ├── users.py        # User management with RBAC
 │   │   │   ├── beneficiaries.py # Foreign nationals tracking
-│   │   │   ├── visa_applications.py # Core visa case management
+│   │   │   ├── petitions.py # Core visa case management
 │   │   │   ├── todos.py        # Task tracking with metrics
 │   │   │   ├── dashboard.py    # Analytics and summaries
 │   │   │   ├── notifications.py # Alert and messaging system
@@ -99,7 +99,7 @@ AMA-IMPACT/
 │   │   ├── models/             # SQLAlchemy database models
 │   │   │   ├── user.py         # User accounts and roles
 │   │   │   ├── beneficiary.py  # Foreign nationals
-│   │   │   ├── visa.py         # Visa applications and types
+│   │   │   ├── petition.py         # Petitions and types
 │   │   │   ├── notification.py # Notifications and email logs
 │   │   │   ├── audit.py        # Audit trail tracking
 │   │   │   └── ...             # Additional models
@@ -130,7 +130,7 @@ AMA-IMPACT/
 - **Hierarchical Visibility**: Users see data based on organizational structure  
 - **Department Management**: Full CRUD for organizational units with tree hierarchy
 - **Visa Tracking**: H-1B, L-1, O-1, TN, EB-1A/B, EB-2, PERM, OPT, EAD, Green Card
-- **Case Groups**: Organize related visa applications (e.g., H1B → Green Card pathway)
+- **Case Groups**: Organize related petitions (e.g., H1B → Green Card pathway)
   - PM approval workflow with status transitions (DRAFT → PENDING_PM_APPROVAL → APPROVED/REJECTED)
   - Timeline endpoint combines audit logs, milestones, and todos for complete case history
   - Automatic HR and law firm assignment on approval
@@ -221,7 +221,7 @@ AMA-IMPACT/
 | Role | Access Level | Permissions | User Creation Rights |
 |------|-------------|-------------|---------------------|
 | **ADMIN** | System-wide | Full access to all data and settings | Can create any role |
-| **HR** | Multi-contract | Manage visa applications, view all beneficiaries | Can create BENEFICIARY users only |
+| **HR** | Multi-contract | Manage petitions, view all beneficiaries | Can create BENEFICIARY users only |
 | **PM** | Contract-wide | View all data + advanced metrics | Can create BENEFICIARY users only |
 | **MANAGER** | Team-level | View/edit direct and indirect reports | Can create BENEFICIARY users only |
 | **BENEFICIARY** | Self-only | View own visa cases and todos | Cannot create users |
@@ -310,7 +310,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 ### ✅ Phase 1: MVP (Completed - v1.0)
 - ✅ Authentication & authorization
 - ✅ User & contract management  
-- ✅ Visa application CRUD
+- ✅ Petition CRUD
 - ✅ Beneficiary system
 - ✅ Basic audit trail
 

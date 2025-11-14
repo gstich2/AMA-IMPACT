@@ -44,7 +44,7 @@ const mockUsers = [
 
 ### ✅ ALWAYS DO:
 1. **Missing data?** → Add to backend fixtures:
-   - `backend/scripts/fixtures/seed_visa_types.py`
+   - `backend/scripts/fixtures/REMOVED - PetitionType is now an enum`
    - `backend/scripts/fixtures/contracts/seed_assess.py`
    - `backend/scripts/fixtures/contracts/seed_rses.py`
    - `backend/scripts/fixtures/seed_development_data.py`
@@ -359,6 +359,58 @@ npm install
 **Admin:**
 - Email: `admin@ama-impact.com`
 - Password: `Admin123!`
+
+---
+
+## 14. Milestone Progress Tracking System
+
+### Overview
+The system tracks immigration case progress through petition-specific pipelines. Each petition type (I-140, I-485, H-1B, etc.) has a defined sequence of milestones with completion weights.
+
+### Architecture
+- **Milestone Model:** Links to petitions, stores milestone type/status/dates
+- **Pipeline Config:** `backend/app/config/petition_pipelines.py` - defines petition-specific stages
+- **Progress API:** `/api/v1/case-groups/{id}/progress` - calculates progress by comparing completed milestones to pipeline
+- **Frontend:** Progress panel in case detail page shows visual pipeline with completion status
+
+### Available Pipelines
+- **I140_PIPELINE:** EB-2/EB-3 immigrant petitions (8 stages)
+- **I485_PIPELINE:** Adjustment of Status/Green Card (10 stages)
+- **I129_PIPELINE:** H-1B/L-1 nonimmigrant petitions (7 stages)
+- **PERM_PIPELINE:** Labor certification (7 stages)
+- **TN_PIPELINE:** TN visa applications (5 stages)
+- **DEFAULT_PIPELINE:** Generic fallback (5 stages)
+
+### Key Files
+- `backend/app/models/milestone.py` - Milestone model and enums
+- `backend/app/config/petition_pipelines.py` - Pipeline definitions
+- `backend/app/api/v1/case_groups.py` - Progress endpoint (line 880)
+- `frontend/app/cases/[id]/page.tsx` - Progress display
+
+### Adding New Pipelines
+1. Define milestone types in `milestone.py`
+2. Create pipeline constant in `petition_pipelines.py`
+3. Update `get_pipeline_for_petition_type()` mapping
+4. Test import: `python -c "from app.config.petition_pipelines import get_pipeline_for_petition_type; print('OK')"`
+5. Restart backend
+
+### Critical Rule: Pipeline Milestone Types MUST Match Database
+❌ **Wrong:** Pipeline uses `MilestoneType.APPROVED` but DB has `I140_APPROVED`  
+✅ **Correct:** Pipeline uses `MilestoneType.I140_APPROVED` matching DB exactly
+
+Progress calculation: `if milestone_type in completed_milestone_types` - this is exact enum comparison!
+
+### Troubleshooting
+**Progress shows 0% despite completed milestones:**
+```sql
+-- Check DB milestones
+SELECT milestone_type FROM milestones WHERE petition_id = 'id';
+
+-- Compare to pipeline
+python -c "from app.config.petition_pipelines import get_pipeline_for_petition_type; from app.models.petition import PetitionType; print([s['milestone_type'].value for s in get_pipeline_for_petition_type(PetitionType.I140)['stages']])"
+```
+
+**Full Documentation:** See `MILESTONE_PROGRESS_SYSTEM.md`
 
 ---
 

@@ -52,7 +52,7 @@ class AuditLogFilter(BaseModel):
     user_id: Optional[str] = Field(None, description="Filter by user ID")
     user_email: Optional[str] = Field(None, description="Filter by user email")
     action: Optional[AuditAction] = Field(None, description="Filter by action type")
-    resource_type: Optional[str] = Field(None, description="Filter by resource type (visa_application, user, etc.)")
+    resource_type: Optional[str] = Field(None, description="Filter by resource type (petition, user, case_group, etc.)")
     resource_id: Optional[str] = Field(None, description="Filter by specific resource ID")
     date_from: Optional[datetime] = Field(None, description="Filter from date (inclusive)")
     date_to: Optional[datetime] = Field(None, description="Filter to date (inclusive)")

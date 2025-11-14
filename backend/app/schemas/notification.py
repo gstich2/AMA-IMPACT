@@ -71,7 +71,7 @@ class EmailLogResponse(BaseModel):
     body: str
     status: EmailStatus
     error_message: Optional[str]
-    visa_application_id: Optional[str]
+    petition_id: Optional[str]
     sent_at: Optional[datetime]
     created_at: datetime
 
@@ -84,7 +84,7 @@ class EmailSendRequest(BaseModel):
     recipient_email: str = Field(..., description="Email address to send to")
     subject: str = Field(..., min_length=1, max_length=500)
     body: str = Field(..., min_length=1)
-    visa_application_id: Optional[str] = None
+    petition_id: Optional[str] = None
 
 
 class NotificationPreferences(BaseModel):

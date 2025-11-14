@@ -39,7 +39,7 @@ export default function NewCasePage() {
   // Form state
   const [formData, setFormData] = useState({
     beneficiary_id: '',
-    case_type: '',
+    pathway_type: '',
     priority: 'MEDIUM',
     case_started_date: '',
     target_completion_date: '',
@@ -84,7 +84,7 @@ export default function NewCasePage() {
       setError('Please select a beneficiary')
       return
     }
-    if (!formData.case_type) {
+    if (!formData.pathway_type) {
       setError('Please select a case type')
       return
     }
@@ -95,7 +95,7 @@ export default function NewCasePage() {
       // Prepare data
       const caseData = {
         beneficiary_id: formData.beneficiary_id,
-        case_type: formData.case_type,
+        pathway_type: formData.pathway_type,
         priority: formData.priority,
         status: 'PLANNING',
         approval_status: 'DRAFT',
@@ -282,14 +282,14 @@ export default function NewCasePage() {
 
             {/* Case Type */}
             <div className="space-y-2">
-              <Label htmlFor="case_type">
+              <Label htmlFor="pathway_type">
                 Case Type <span className="text-destructive">*</span>
               </Label>
               <Select
-                value={formData.case_type}
-                onValueChange={(value) => setFormData({ ...formData, case_type: value })}
+                value={formData.pathway_type}
+                onValueChange={(value) => setFormData({ ...formData, pathway_type: value })}
               >
-                <SelectTrigger id="case_type">
+                <SelectTrigger id="pathway_type">
                   <SelectValue placeholder="Select case type" />
                 </SelectTrigger>
                 <SelectContent>

@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 class RFETrackingBase(BaseModel):
     """Base schema for RFE tracking."""
-    visa_application_id: str
+    petition_id: str
     rfe_type: str  # initial_evidence, additional_evidence, intent_to_deny, etc.
     status: str  # received, in_progress, responded, resolved
     rfe_received_date: date

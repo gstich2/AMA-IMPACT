@@ -57,18 +57,18 @@ Authorization: Bearer <jwt_access_token>
 |----------|---------|-------------|
 | `/beneficiaries/` | GET, POST | Foreign national tracking |
 | `/beneficiaries/{id}` | GET, PUT, DELETE | Individual beneficiary operations |
-| `/beneficiaries/{id}/visa-applications` | GET | All visa cases for beneficiary |
+| `/beneficiaries/{id}/petitions` | GET | All visa cases for beneficiary |
 | `/dependents/` | GET, POST | Dependent family members |
 | `/dependents/{id}` | GET, PUT, DELETE | Dependent operations |
 
-### 📋 Visa Case Management
+### 📋 Petition Management
 | Endpoint | Method | Description |
 |----------|---------|-------------|
-| `/visa-applications/` | GET | List visa applications with advanced filtering |
-| `/visa-applications/` | POST | Create new visa application |
-| `/visa-applications/{id}` | GET, PUT, DELETE | Individual case operations |
-| `/visa-applications/bulk-update` | PUT | Update multiple applications |
-| `/visa-applications/export` | GET | Export applications as CSV/Excel |
+| `/petitions/` | GET | List petitions with advanced filtering |
+| `/petitions/` | POST | Create new petition |
+| `/petitions/{id}` | GET, PUT, DELETE | Individual petition operations |
+| `/petitions/bulk-update` | PUT | Update multiple petitions |
+| `/petitions/export` | GET | Export petitions as CSV/Excel |
 
 ### ✅ Task Management  
 | Endpoint | Method | Description |
@@ -255,7 +255,7 @@ Authentication endpoints are rate-limited:
 
 ### GET `/api/v1/reports/department-stats`
 
-Get visa tracking statistics for a department or contract. Focuses on beneficiary counts and visa application metrics.
+Get visa tracking statistics for a department or contract. Focuses on beneficiary counts and petition metrics.
 
 **Query Parameters:**
 - `department_id` (optional): Specific department UUID

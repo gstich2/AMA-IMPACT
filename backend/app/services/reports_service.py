@@ -11,14 +11,14 @@ from sqlalchemy import and_, or_, desc, func, extract, case
 import uuid
 import statistics
 
-from app.models.visa import VisaApplication, VisaStatus, VisaType, VisaTypeEnum
+from app.models.petition import Petition, PetitionStatus, PetitionType
 from app.models.user import User, UserRole
 from app.models.beneficiary import Beneficiary
 from app.models.department import Department
 from app.models.audit import AuditLog, AuditAction
 from app.models.todo import Todo, TodoStatus
 from app.schemas.reports import (
-    VisaStatusReport, UserActivityReport, ComplianceReport,
+    PetitionStatusReport, UserActivityReport, ComplianceReport,
     PerformanceReport, ReportRequest, ReportResponse, 
     ExecutiveSummary, DashboardWidget, ReportPeriod
 )
@@ -97,18 +97,18 @@ class ReportsService:
         request: ReportRequest,
         current_user_id: str,
         current_user_role: UserRole
-    ) -> VisaStatusReport:
+    ) -> PetitionStatusReport:
         """Generate comprehensive visa status report."""
         start_date, end_date = self._get_date_range(request.period, request.start_date, request.end_date)
         
         # Base query
-        base_query = self.db.query(VisaApplication)
+        base_query = self.db.query(Petition)
         base_query = self._apply_rbac_filters(base_query, current_user_id, current_user_role)
         
         # Apply date filter
         if request.period != ReportPeriod.YEARLY:  # For yearly, include all historical data
             base_query = base_query.filter(
-                VisaApplication.created_at.between(start_date, end_date)
+                Petition.created_at.between(start_date, end_date)
             )
         
         # Apply additional filters
@@ -118,7 +118,7 @@ class ReportsService:
             )
         
         if request.visa_types:
-            base_query = base_query.filter(VisaApplication.visa_type.in_(request.visa_types))
+            base_query = base_query.filter(Petition.petition_type.in_(request.visa_types))
         
         # Get all applications in scope
         all_applications = base_query.all()
@@ -132,30 +132,30 @@ class ReportsService:
             status_str = str(app.status)
             status_counts[status_str] = status_counts.get(status_str, 0) + 1
             
-            if app.status in [VisaStatus.IN_PROGRESS, VisaStatus.SUBMITTED, VisaStatus.UNDER_REVIEW]:
+            if app.status in [PetitionStatus.IN_PROGRESS, PetitionStatus.SUBMITTED, PetitionStatus.UNDER_REVIEW]:
                 active_count += 1
-            elif app.status in [VisaStatus.APPROVED]:
+            elif app.status in [PetitionStatus.APPROVED]:
                 completed_count += 1
-            elif app.status in [VisaStatus.DENIED, VisaStatus.CANCELLED]:
+            elif app.status in [PetitionStatus.DENIED, PetitionStatus.CANCELLED]:
                 cancelled_count += 1
         
         # Visa type breakdown
         visa_type_counts = {}
         for app in all_applications:
-            visa_type_str = str(app.visa_type)
+            visa_type_str = str(app.petition_type)
             visa_type_counts[visa_type_str] = visa_type_counts.get(visa_type_str, 0) + 1
         
         # Department breakdown
         dept_query = self.db.query(
             Department.name,
-            func.count(VisaApplication.id).label('count')
+            func.count(Petition.id).label('count')
         ).join(User, Department.id == User.department_id)\
          .join(Beneficiary, User.id == Beneficiary.user_id)\
-         .join(VisaApplication, Beneficiary.id == VisaApplication.beneficiary_id)
+         .join(Petition, Beneficiary.id == Petition.beneficiary_id)
         
         if request.period != ReportPeriod.YEARLY:
             dept_query = dept_query.filter(
-                VisaApplication.created_at.between(start_date, end_date)
+                Petition.created_at.between(start_date, end_date)
             )
         
         department_breakdown = {}
@@ -163,7 +163,7 @@ class ReportsService:
             department_breakdown[dept_name] = count
         
         # Processing time analysis (for approved applications)
-        approved_apps = [app for app in all_applications if app.status == VisaStatus.APPROVED and app.approval_date]
+        approved_apps = [app for app in all_applications if app.status == PetitionStatus.APPROVED and app.approval_date]
         processing_times = []
         for app in approved_apps:
             if app.approval_date and app.created_at:
@@ -196,7 +196,7 @@ class ReportsService:
             period_end = start_date - timedelta(days=30 * (i-1)) if i > 0 else end_date
             
             period_count = base_query.filter(
-                VisaApplication.created_at.between(period_start, period_end)
+                Petition.created_at.between(period_start, period_end)
             ).count()
             
             trend_data.append({
@@ -214,7 +214,7 @@ class ReportsService:
                 detailed_records.append({
                     "id": app.id,
                     "beneficiary_name": app.beneficiary.full_name,
-                    "visa_type": str(app.visa_type),
+                    "visa_type": str(app.petition_type),
                     "status": str(app.status),
                     "created_at": app.created_at.isoformat(),
                     "expiration_date": app.expiration_date.isoformat() if app.expiration_date else None,
@@ -222,7 +222,7 @@ class ReportsService:
                     "company_case_id": app.company_case_id
                 })
         
-        return VisaStatusReport(
+        return PetitionStatusReport(
             report_title=f"Visa Status Report - {request.period.value.title()}",
             report_period=f"{start_date.date()} to {end_date.date()}",
             generated_at=datetime.utcnow(),
@@ -373,19 +373,19 @@ class ReportsService:
         last_month_start = (this_month_start - timedelta(days=1)).replace(day=1)
         
         # Base queries with RBAC
-        visa_query = self.db.query(VisaApplication)
+        visa_query = self.db.query(Petition)
         visa_query = self._apply_rbac_filters(visa_query, current_user_id, current_user_role)
         
         # Key metrics
         total_visas = visa_query.count()
         this_month_visas = visa_query.filter(
-            VisaApplication.created_at >= datetime.combine(this_month_start, datetime.min.time())
+            Petition.created_at >= datetime.combine(this_month_start, datetime.min.time())
         ).count()
         
         last_month_visas = visa_query.filter(
             and_(
-                VisaApplication.created_at >= datetime.combine(last_month_start, datetime.min.time()),
-                VisaApplication.created_at < datetime.combine(this_month_start, datetime.min.time())
+                Petition.created_at >= datetime.combine(last_month_start, datetime.min.time()),
+                Petition.created_at < datetime.combine(this_month_start, datetime.min.time())
             )
         ).count()
         
@@ -394,14 +394,14 @@ class ReportsService:
         
         # Status overview
         pending_approvals = visa_query.filter(
-            VisaApplication.status.in_([VisaStatus.SUBMITTED, VisaStatus.UNDER_REVIEW])
+            Petition.status.in_([PetitionStatus.SUBMITTED, PetitionStatus.UNDER_REVIEW])
         ).count()
         
         expiring_soon = visa_query.filter(
             and_(
-                VisaApplication.expiration_date.isnot(None),
-                VisaApplication.expiration_date <= today + timedelta(days=30),
-                VisaApplication.expiration_date >= today
+                Petition.expiration_date.isnot(None),
+                Petition.expiration_date <= today + timedelta(days=30),
+                Petition.expiration_date >= today
             )
         ).count()
         
@@ -414,7 +414,7 @@ class ReportsService:
         ).count()
         
         # Performance metrics
-        approved_visas = visa_query.filter(VisaApplication.status == VisaStatus.APPROVED).all()
+        approved_visas = visa_query.filter(Petition.status == PetitionStatus.APPROVED).all()
         processing_times = []
         for visa in approved_visas:
             if visa.approval_date and visa.created_at:
@@ -480,7 +480,7 @@ class ReportsService:
         return ExecutiveSummary(
             summary_date=today,
             generated_at=datetime.utcnow(),
-            total_visa_applications=total_visas,
+            total_petitions=total_visas,
             applications_this_month=this_month_visas,
             month_over_month_growth=round(mom_growth, 2),
             pending_approvals=pending_approvals,
@@ -611,8 +611,8 @@ class ReportsService:
         beneficiary_ids = [b.id for b in beneficiaries_total_query.all()]
         
         # Initialize defaults for when there are no beneficiaries
-        visa_applications_total = 0
-        visa_applications_active = 0
+        petitions_total = 0
+        petitions_active = 0
         visa_by_status = {}
         visa_by_type = {}
         expiring_30 = 0
@@ -620,26 +620,26 @@ class ReportsService:
         expired = 0
         
         if beneficiary_ids:
-            visa_apps_query = self.db.query(VisaApplication).filter(
-                VisaApplication.beneficiary_id.in_(beneficiary_ids)
+            visa_apps_query = self.db.query(Petition).filter(
+                Petition.beneficiary_id.in_(beneficiary_ids)
             )
             
-            visa_applications_total = visa_apps_query.count()
-            visa_applications_active = visa_apps_query.filter(
-                VisaApplication.is_active == True
+            petitions_total = visa_apps_query.count()
+            petitions_active = visa_apps_query.filter(
+                Petition.is_active == True
             ).count()
             
             # Breakdown by status
-            for status in VisaStatus:
-                count = visa_apps_query.filter(VisaApplication.status == status).count()
+            for status in PetitionStatus:
+                count = visa_apps_query.filter(Petition.status == status).count()
                 if count > 0:
                     visa_by_status[status.value] = count
             
             # Breakdown by type
-            for visa_type in VisaTypeEnum:
-                count = visa_apps_query.filter(VisaApplication.visa_type == visa_type).count()
+            for petition_type_enum in PetitionType:
+                count = visa_apps_query.filter(Petition.petition_type == petition_type_enum).count()
                 if count > 0:
-                    visa_by_type[visa_type.value] = count
+                    visa_by_type[petition_type_enum.value] = count
             
             # Expiration tracking
             today = datetime.utcnow().date()
@@ -648,24 +648,24 @@ class ReportsService:
             
             expiring_30 = visa_apps_query.filter(
                 and_(
-                    VisaApplication.expiration_date >= today,
-                    VisaApplication.expiration_date <= thirty_days,
-                    VisaApplication.is_active == True
+                    Petition.expiration_date >= today,
+                    Petition.expiration_date <= thirty_days,
+                    Petition.is_active == True
                 )
             ).count()
             
             expiring_90 = visa_apps_query.filter(
                 and_(
-                    VisaApplication.expiration_date >= today,
-                    VisaApplication.expiration_date <= ninety_days,
-                    VisaApplication.is_active == True
+                    Petition.expiration_date >= today,
+                    Petition.expiration_date <= ninety_days,
+                    Petition.is_active == True
                 )
             ).count()
             
             expired = visa_apps_query.filter(
                 and_(
-                    VisaApplication.expiration_date < today,
-                    VisaApplication.is_active == True
+                    Petition.expiration_date < today,
+                    Petition.is_active == True
                 )
             ).count()
         
@@ -679,10 +679,10 @@ class ReportsService:
             beneficiaries_total=beneficiaries_total,
             beneficiaries_active=beneficiaries_active,
             beneficiaries_inactive=beneficiaries_inactive,
-            visa_applications_total=visa_applications_total,
-            visa_applications_active=visa_applications_active,
-            visa_applications_by_status=visa_by_status,
-            visa_applications_by_type=visa_by_type,
+            petitions_total=petitions_total,
+            petitions_active=petitions_active,
+            petitions_by_status=visa_by_status,
+            petitions_by_type=visa_by_type,
             expiring_next_30_days=expiring_30,
             expiring_next_90_days=expiring_90,
             expired=expired,

@@ -12,7 +12,7 @@ from sqlalchemy import and_, or_, desc, func
 
 from app.models.notification import Notification, NotificationType, EmailLog, EmailStatus
 from app.models.user import User, UserRole
-from app.models.visa import VisaApplication, VisaStatus
+from app.models.petition import Petition, PetitionStatus
 from app.models.todo import Todo, TodoStatus
 from app.schemas.notification import (
     NotificationCreate, BulkNotificationCreate, SystemAnnouncement
@@ -123,9 +123,9 @@ class NotificationService:
         
         return self.create_bulk_notifications(bulk_request)
     
-    def check_expiring_visas(self, days_ahead: int = 30) -> List[Notification]:
+    def check_expiring_petitions(self, days_ahead: int = 30) -> List[Notification]:
         """
-        Check for expiring visas and create notifications.
+        Check for expiring petitions and create notifications.
         
         Args:
             days_ahead: Days in advance to notify about expiration
@@ -136,57 +136,57 @@ class NotificationService:
         cutoff_date = (datetime.utcnow() + timedelta(days=days_ahead)).date()
         today = datetime.utcnow().date()
         
-        # Find visas expiring within the timeframe
-        expiring_visas = self.db.query(VisaApplication).filter(
+        # Find petitions expiring within the timeframe
+        expiring_petitions = self.db.query(Petition).filter(
             and_(
-                VisaApplication.expiration_date.isnot(None),
-                VisaApplication.expiration_date <= cutoff_date,
-                VisaApplication.expiration_date >= today,
-                VisaApplication.status.in_([
-                    VisaStatus.APPROVED, VisaStatus.IN_PROGRESS, VisaStatus.SUBMITTED
+                Petition.expiration_date.isnot(None),
+                Petition.expiration_date <= cutoff_date,
+                Petition.expiration_date >= today,
+                Petition.status.in_([
+                    PetitionStatus.APPROVED, PetitionStatus.IN_PROGRESS, PetitionStatus.SUBMITTED
                 ])
             )
         ).all()
         
         notifications = []
         
-        for visa in expiring_visas:
-            # Check if notification already exists for this visa
+        for petition in expiring_petitions:
+            # Check if notification already exists for this petition
             existing = self.db.query(Notification).filter(
                 and_(
-                    Notification.user_id == visa.beneficiary.user_id,
+                    Notification.user_id == petition.beneficiary.user_id,
                     Notification.type == NotificationType.VISA_EXPIRING,
-                    Notification.link == f"/visa-applications/{visa.id}"
+                    Notification.link == f"/petitions/{petition.id}"
                 )
             ).first()
             
             if existing:
                 continue  # Skip if already notified
             
-            days_until_expiry = (visa.expiration_date - today).days
+            days_until_expiry = (petition.expiration_date - today).days
             
             if days_until_expiry < 0:
                 # Overdue
-                title = f"URGENT: {visa.visa_type} Visa Expired"
-                message = f"Your {visa.visa_type} visa expired {abs(days_until_expiry)} days ago. Immediate action required."
+                title = f"URGENT: {petition.petition_type} Petition Expired"
+                message = f"Your {petition.petition_type} petition expired {abs(days_until_expiry)} days ago. Immediate action required."
                 notification_type = NotificationType.OVERDUE
             elif days_until_expiry <= 7:
                 # Critical - within a week
-                title = f"CRITICAL: {visa.visa_type} Visa Expires in {days_until_expiry} days"
-                message = f"Your {visa.visa_type} visa expires on {visa.expiration_date.strftime('%B %d, %Y')}. Please take immediate action."
+                title = f"CRITICAL: {petition.petition_type} Petition Expires in {days_until_expiry} days"
+                message = f"Your {petition.petition_type} petition expires on {petition.expiration_date.strftime('%B %d, %Y')}. Please take immediate action."
                 notification_type = NotificationType.VISA_EXPIRING
             else:
                 # Standard expiration warning
-                title = f"{visa.visa_type} Visa Expiring Soon"
-                message = f"Your {visa.visa_type} visa expires on {visa.expiration_date.strftime('%B %d, %Y')} ({days_until_expiry} days). Please plan for renewal."
+                title = f"{petition.petition_type} Petition Expiring Soon"
+                message = f"Your {petition.petition_type} petition expires on {petition.expiration_date.strftime('%B %d, %Y')} ({days_until_expiry} days). Please plan for renewal."
                 notification_type = NotificationType.VISA_EXPIRING
             
             notification = self.create_notification(
-                user_id=visa.beneficiary.user_id,
+                user_id=petition.beneficiary.user_id,
                 notification_type=notification_type,
                 title=title,
                 message=message,
-                link=f"/visa-applications/{visa.id}"
+                link=f"/petitions/{petition.id}"
             )
             
             notifications.append(notification)

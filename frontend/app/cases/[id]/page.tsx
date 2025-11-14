@@ -23,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { caseGroupsAPI, authAPI, visaAPI, lawFirmsAPI, usersAPI } from '@/lib/api'
+import { caseGroupsAPI, authAPI, petitionsAPI, lawFirmsAPI, usersAPI } from '@/lib/api'
 import { 
   FolderOpen, 
   ArrowLeft,
@@ -48,7 +48,7 @@ import {
 interface CaseGroup {
   id: string
   case_number: string
-  case_type: string
+  pathway_type: string
   status: string
   priority: string
   approval_status: string
@@ -128,7 +128,7 @@ interface CaseGroup {
   pm_approval_notes?: string
   notes?: string
   attorney_portal_link?: string
-  visa_applications?: any[]
+  petitions?: any[]
   todos?: any[]
   created_at?: string
   updated_at?: string
@@ -492,7 +492,7 @@ export default function CaseDetailPage() {
                 {getPriorityBadge(caseGroup.priority)}
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
-                <span className="font-medium">{getCaseTypeLabel(caseGroup.case_type)}</span>
+                <span className="font-medium">{getCaseTypeLabel(caseGroup.pathway_type)}</span>
                 {caseGroup.beneficiary && (
                   <>
                     <span className="text-gray-400">•</span>
@@ -559,7 +559,7 @@ export default function CaseDetailPage() {
                 
                 {/* Case Type */}
                 <div className="text-sm text-muted-foreground mt-2">
-                  {getCaseTypeLabel(caseGroup.case_type)} Case Group
+                  {getCaseTypeLabel(caseGroup.pathway_type)} Case Group
                 </div>
               </div>
               
@@ -595,12 +595,12 @@ export default function CaseDetailPage() {
           </CardHeader>
           
           <CardContent className="space-y-4">
-            {/* Visa Applications in this Case Group */}
-            {(caseGroup as any).applications && (caseGroup as any).applications.length > 0 && (
+            {/* Petitions in this Case Group */}
+            {(caseGroup as any).petitions && (caseGroup as any).petitions.length > 0 && (
               <div>
-                <div className="font-medium text-sm mb-3">Visa Applications in this Case:</div>
+                <div className="font-medium text-sm mb-3">Petitions in this Case:</div>
                 <div className="space-y-2">
-                  {(caseGroup as any).applications.map((app: any) => (
+                  {(caseGroup as any).petitions.map((app: any) => (
                     <div key={app.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                       <FileText className="h-5 w-5 text-gray-600 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -804,7 +804,7 @@ export default function CaseDetailPage() {
                 Loading progress...
               </CardContent>
             </Card>
-          ) : progressData && progressData.visa_applications && progressData.visa_applications.length > 0 ? (
+          ) : progressData && progressData.petitions && progressData.petitions.length > 0 ? (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -817,8 +817,8 @@ export default function CaseDetailPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Show progress for EACH visa application */}
-                {progressData.visa_applications.map((visa: any) => (
-                  <div key={visa.visa_application_id} className="border-b last:border-b-0 pb-6 last:pb-0">
+                {progressData.petitions.map((visa: any) => (
+                  <div key={visa.petition_id} className="border-b last:border-b-0 pb-6 last:pb-0">
                     {/* Visa Header */}
                     <div className="flex items-center justify-between mb-3">
                       <div>
@@ -901,7 +901,12 @@ export default function CaseDetailPage() {
           ) : (
             <Card>
               <CardContent className="py-8 text-center text-muted-foreground">
-                No visa applications found
+                No petitions found for progress tracking
+                {progressData && (
+                  <div className="text-xs mt-2">
+                    Debug: {JSON.stringify(Object.keys(progressData))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -1130,33 +1135,7 @@ export default function CaseDetailPage() {
           </Card>
         )}
 
-        {/* Visa Applications (if populated) */}
-        {caseGroup.visa_applications && caseGroup.visa_applications.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Visa Applications ({caseGroup.visa_applications.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {caseGroup.visa_applications.map((visa: any) => (
-                  <div key={visa.id} className="flex items-center justify-between border-b pb-2">
-                    <div>
-                      <div className="font-medium">{visa.visa_type} - {visa.petition_type}</div>
-                      <div className="text-sm text-muted-foreground">{visa.status}</div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => router.push(`/visas/${visa.id}`)}
-                    >
-                      View Details
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Removed redundant Petitions list - already shown in Case Group Overview */}
 
         {/* Todos (if populated) */}
         {caseGroup.todos && caseGroup.todos.length > 0 && (

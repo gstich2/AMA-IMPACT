@@ -14,7 +14,7 @@ Fixtures are organized by responsibility:
 ```
 fixtures/
 ├── README.md                     # This file
-├── seed_visa_types.py            # Global: 14 visa type definitions
+├── REMOVED - PetitionType is now an enum            # Global: 14 visa type definitions
 ├── seed_law_firms.py             # Global: Law firm vendors
 ├── contracts/                    # Contract-specific setups
 │   ├── seed_assess.py            # ASSESS contract + depts + PM/Manager
@@ -33,7 +33,7 @@ python scripts/setup_dev_environment.py
 **Individual fixtures:**
 ```bash
 cd backend
-python scripts/fixtures/seed_visa_types.py
+python scripts/fixtures/REMOVED - PetitionType is now an enum
 python scripts/fixtures/contracts/seed_assess.py
 python scripts/fixtures/contracts/seed_rses.py
 python scripts/fixtures/seed_law_firms.py
@@ -101,7 +101,7 @@ python scripts/fixtures/contracts/seed_assess_visa_apps.py
 Creates:
 - **11 ASSESS beneficiaries** with real employee data
 - **11 case groups** (2 completed, 5 active, 2 pending PM, 2 draft)
-- **11 visa applications** with 28 milestones showing realistic progression
+- **11 petitions** with 28 milestones showing realistic progression
 - Passwords: `Dev123!` (no password change required for testing)
 
 Beneficiaries include: Gerrit-Daniel Stich, Brandon Lowe, David Craig Penner, Timothy Chau, Luis Fernandes, Kiran Ravikumar, Victor Sousa, David Garcia Perez, Tove Aagen, Jacob Friedrichson, Georgios Bellas-Chatzigeorgis
@@ -138,7 +138,7 @@ Creates:
 `seed_development_data.py` creates test data:
 - Beneficiaries with various visa statuses
 - Case groups (immigration pathways)
-- Visa applications (H1B, EB2-NIW, etc.)
+- Petitions (H1B, EB2-NIW, etc.)
 - Todos with different priorities
 - Sample dependents
 

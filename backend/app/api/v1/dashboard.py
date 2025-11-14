@@ -12,7 +12,7 @@ from app.core.database import get_db
 from app.core.security import get_current_active_user
 from app.models.user import User, UserRole
 from app.models.beneficiary import Beneficiary
-from app.models.visa import VisaApplication, VisaStatus, VisaCaseStatus
+from app.models.petition import Petition, PetitionStatus, CaseStatus
 from app.models.todo import Todo, TodoStatus, TodoPriority
 from app.models.case_group import CaseGroup, CaseStatus
 from app.schemas.dashboard import DashboardResponse, DashboardSummary, RecentActivity
@@ -41,26 +41,26 @@ def get_dashboard(
     # Get basic counts  
     total_beneficiaries = db.query(Beneficiary).filter(Beneficiary.is_active == True).count()
     
-    # Active visas (approved, in_progress, submitted)
-    active_visa_statuses = [VisaStatus.APPROVED, VisaStatus.IN_PROGRESS, VisaStatus.SUBMITTED]
-    active_visas = db.query(VisaApplication).filter(VisaApplication.status.in_(active_visa_statuses)).count()
+    # Active petitions (approved, in_progress, submitted)
+    active_visa_statuses = [PetitionStatus.APPROVED, PetitionStatus.IN_PROGRESS, PetitionStatus.SUBMITTED]
+    active_petitions = db.query(Petition).filter(Petition.status.in_(active_visa_statuses)).count()
     
     # Expiring soon (within 30 days)
     thirty_days_from_now = datetime.utcnow().date() + timedelta(days=30)
     today = datetime.utcnow().date()
-    expiring_soon = db.query(VisaApplication).filter(
+    expiring_petitions = db.query(Petition).filter(
         and_(
-            VisaApplication.expiration_date <= thirty_days_from_now,
-            VisaApplication.expiration_date >= today,
-            VisaApplication.status.in_(active_visa_statuses)
+            Petition.expiration_date <= thirty_days_from_now,
+            Petition.expiration_date >= today,
+            Petition.status.in_(active_visa_statuses)
         )
     ).count()
     
-    # Overdue visas (expired and still active)
-    overdue_visas = db.query(VisaApplication).filter(
+    # Overdue petitions (expired and still active)
+    overdue_petitions = db.query(Petition).filter(
         and_(
-            VisaApplication.expiration_date < today,
-            VisaApplication.status.in_(active_visa_statuses)
+            Petition.expiration_date < today,
+            Petition.status.in_(active_visa_statuses)
         )
     ).count()
     
@@ -92,9 +92,9 @@ def get_dashboard(
     return DashboardResponse(
         summary=DashboardSummary(
             total_beneficiaries=total_beneficiaries,
-            active_visas=active_visas,
-            expiring_soon=expiring_soon,
-            overdue_visas=overdue_visas,
+            active_petitions=active_petitions,
+            expiring_petitions=expiring_petitions,
+            overdue_petitions=overdue_petitions,
             pending_todos=pending_todos,
             active_case_groups=active_case_groups,
             completed_todos_this_month=completed_todos_this_month
@@ -119,8 +119,8 @@ def get_quick_stats(
     dashboard_data = get_dashboard(current_user, db)
     
     return {
-        "active_visas": dashboard_data.summary.active_visas,
-        "expiring_soon": dashboard_data.summary.expiring_soon,
+        "active_petitions": dashboard_data.summary.active_petitions,
+        "expiring_petitions": dashboard_data.summary.expiring_petitions,
         "pending_todos": dashboard_data.summary.pending_todos,
-        "overdue_visas": dashboard_data.summary.overdue_visas
+        "overdue_petitions": dashboard_data.summary.overdue_petitions
     }

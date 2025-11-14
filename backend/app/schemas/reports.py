@@ -28,7 +28,7 @@ class ReportPeriod(str, Enum):
     CUSTOM = "custom"
 
 
-class VisaStatusReport(BaseModel):
+class PetitionStatusReport(BaseModel):
     """Visa application status report."""
     report_title: str
     report_period: str
@@ -247,7 +247,7 @@ class ReportResponse(BaseModel):
     generated_at: Optional[datetime] = None
     
     # Report data (inline for small reports)
-    report_data: Optional[Union[VisaStatusReport, UserActivityReport, ComplianceReport, PerformanceReport, FinancialReport]] = None
+    report_data: Optional[Union[PetitionStatusReport, UserActivityReport, ComplianceReport, PerformanceReport, FinancialReport]] = None
     
     # File info (for large reports)
     file_url: Optional[str] = None
@@ -322,8 +322,8 @@ class ExecutiveSummary(BaseModel):
     generated_at: datetime
     
     # Key metrics
-    total_visa_applications: int
-    applications_this_month: int
+    total_petitions: int
+    petitions_this_month: int
     month_over_month_growth: float
     
     # Status overview

@@ -5,7 +5,7 @@ from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import BaseModel
-from app.models.visa import VisaStatus
+from app.models.petition import PetitionStatus
 from app.models.todo import TodoStatus, TodoPriority
 
 
@@ -36,7 +36,7 @@ class UpcomingExpiration(BaseModel):
     visa_type: str
     expiration_date: date
     days_remaining: int
-    status: VisaStatus
+    status: PetitionStatus
 
 
 class UrgentTodo(BaseModel):

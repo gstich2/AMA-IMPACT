@@ -13,7 +13,7 @@ Usage:
     
 Or run individual scripts:
     python scripts/init_database.py
-    python scripts/fixtures/seed_visa_types.py
+    # NOTE: seed_visa_types.py removed - PetitionType is now an enum in the model
     python scripts/fixtures/contracts/seed_assess.py
     python scripts/fixtures/contracts/seed_rses.py
     python scripts/fixtures/seed_law_firms.py
@@ -56,7 +56,7 @@ def setup_dev_environment():
     
     scripts = [
         (SCRIPTS_DIR / "init_database.py", "Initialize Database"),
-        (SCRIPTS_DIR / "fixtures" / "seed_visa_types.py", "Seed Visa Types"),
+        # Note: seed_visa_types.py removed - Petition model uses PetitionType enum instead
         (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_assess.py", "Seed ASSESS Contract"),
         (SCRIPTS_DIR / "fixtures" / "contracts" / "seed_rses.py", "Seed RSES Contract"),
         (SCRIPTS_DIR / "fixtures" / "seed_law_firms.py", "Seed Law Firms"),
@@ -77,21 +77,25 @@ def setup_dev_environment():
     print("="*60)
     print("\nYour database is ready with:")
     print("  • Admin user: admin@ama-impact.com / Admin123!")
-    print("  • PM user: pm.assess@ama-impact.com / TempPassword123!")
-    print("  • ASSESS & RSES contracts")
-    print("  • 14 visa types")
+    print("  • ASSESS & RSES contracts with managers")
     print("  • 3 law firms")
     print("  • 13 ASSESS departments (4 L1 + 9 L2) + 2 RSES departments")
-    print("  • 11 ASSESS beneficiaries with realistic employee data")
-    print("  • 11 case groups (2 completed, 5 active, 2 pending PM, 2 draft)")
-    print("  • 11 visa applications with 28 milestones")
-    print("  • Additional test users and data")
+    print("  • 13 ASSESS beneficiaries (11 employees + 2 future hires)")
+    print("  • 13 ASSESS case groups (4 completed LPR, 6 active, 1 pending, 2 draft)")
+    print("  • ~35 ASSESS petitions (I-140, I-485, I-765, I-131, etc.)")
+    print("  • ~60 milestones (case-level + petition-level)")
+    print("  • 5 test scenarios (RFE, Denial, Concurrent, Family, Expired)")
+    print("  • 3 test staff users (HR, PM, Tech Lead)")
     
     print("\nNext steps:")
     print("  1. Start server: cd backend && uvicorn app.main:app --reload --port 7001")
     print("  2. Access API docs: http://localhost:7001/docs")
-    print("  3. Login as PM: pm.assess@ama-impact.com / TempPassword123!")
-    print("  4. View cases: All ASSESS beneficiaries have visa cases with milestones")
+    print("  3. Login as admin or manager:")
+    print("     Admin: admin@ama-impact.com / Admin123!")
+    print("     PM: pm.assess@ama-impact.com / TempPassword123!")
+    print("  4. Test users:")
+    print("     HR: hr@ama-impact.com / HR123!")
+    print("     Test beneficiaries: test.rfe@example.com / Test123!")
     
     return True
 
